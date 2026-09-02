@@ -1,0 +1,51 @@
+# Agents workload on AKS. Placeholders (__ACR_LOGIN_SERVER__, __IMAGE_TAG__,
+# __SESSION_POOL_ENDPOINT__) are substituted by scripts/deploy.sh.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opc-agents
+  namespace: opc-iq
+  labels:
+    app: opc-agents
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opc-agents
+  template:
+    metadata:
+      labels:
+        app: opc-agents
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: opc-agents-sa
+      containers:
+        - name: agents
+          image: __ACR_LOGIN_SERVER__/opc-agents:__IMAGE_TAG__
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: opc-agents-secret
+          env:
+            - name: ACA_SESSION_POOL_ENDPOINT
+              value: "__SESSION_POOL_ENDPOINT__"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20

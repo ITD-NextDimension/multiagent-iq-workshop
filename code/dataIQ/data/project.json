@@ -1,0 +1,29 @@
+[
+  {
+    "projectId": "PRJ-001",
+    "accountId": "ACC-001",
+    "name": "Mingrui Billing System Revamp",
+    "status": "active",
+    "budget": 60000.00,
+    "startDate": "2026-02-01",
+    "dueDate": "2026-05-31"
+  },
+  {
+    "projectId": "PRJ-002",
+    "accountId": "ACC-001",
+    "name": "Yuntu Data Dashboard",
+    "status": "active",
+    "budget": 45000.00,
+    "startDate": "2026-03-01",
+    "dueDate": "2026-06-15"
+  },
+  {
+    "projectId": "PRJ-003",
+    "accountId": "ACC-002",
+    "name": "Mingrui Ops Automation",
+    "status": "done",
+    "budget": 25000.00,
+    "startDate": "2025-11-01",
+    "dueDate": "2026-01-20"
+  }
+]

@@ -1,0 +1,10 @@
+agent-framework
+agent-framework-monty
+agent-framework-orchestrations
+azure-identity
+azure-communication-email
+python-dotenv
+matplotlib
+fastapi
+uvicorn
+mcp

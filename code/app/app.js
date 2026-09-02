@@ -1,0 +1,249 @@
+// AI Company chat frontend — talks to the agents FastAPI (/ask).
+// When served by the API (uvicorn api:app), same-origin requests work out of the box.
+// To point at a different host, set window.AI_COMPANY_API_BASE before this script loads.
+const API_BASE = (window.AI_COMPANY_API_BASE || window.OPC_API_BASE || "").replace(/\/$/, "");
+
+const chat = document.getElementById("chat");
+const welcome = document.getElementById("welcome");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("send");
+const newChatBtn = document.getElementById("newChat");
+const chips = document.getElementById("chips");
+
+let busy = false;
+
+// ---------- helpers ----------
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+// Minimal, safe Markdown → HTML. Mermaid code blocks are dropped (the chart image
+// is shown instead). Everything else is escaped first, so no raw HTML is injected.
+function renderMarkdown(text) {
+  const blocks = [];
+  // Extract fenced code blocks first.
+  let tmp = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (m, lang, code) => {
+    if ((lang || "").toLowerCase() === "mermaid") return ""; // shown as chart image
+    blocks.push(`<pre><code>${escapeHtml(code.replace(/\n$/, ""))}</code></pre>`);
+    return `\u0000${blocks.length - 1}\u0000`;
+  });
+
+  tmp = escapeHtml(tmp)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+?)`/g, '<code class="inline">$1</code>');
+
+  // Lists, tables and paragraphs.
+  const lines = tmp.split(/\n/);
+  const isTableRow = (l) => /\|/.test(l);
+  const isSeparator = (l) => /^\s*\|?[\s:|-]+\|?\s*$/.test(l) && /-/.test(l);
+  const splitCells = (l) => l.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map((c) => c.trim());
+
+  let html = "", inList = false;
+  const flush = () => { if (inList) { html += "</ul>"; inList = false; } };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trimEnd();
+    const codeSlot = line.match(/^\u0000(\d+)\u0000$/);
+    if (codeSlot) { flush(); html += blocks[+codeSlot[1]]; continue; }
+
+    // Markdown table: header row + separator row + body rows.
+    if (isTableRow(line) && i + 1 < lines.length && isSeparator(lines[i + 1])) {
+      flush();
+      const header = splitCells(line);
+      let t = "<table><thead><tr>" + header.map((c) => `<th>${c}</th>`).join("") + "</tr></thead><tbody>";
+      i += 2; // skip header + separator
+      while (i < lines.length && isTableRow(lines[i].trimEnd()) && lines[i].trim() !== "") {
+        const cells = splitCells(lines[i].trimEnd());
+        t += "<tr>" + cells.map((c) => `<td>${c}</td>`).join("") + "</tr>";
+        i++;
+      }
+      i--; // step back; outer loop will advance
+      html += t + "</tbody></table>";
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(line)) {
+      if (!inList) { html += "<ul>"; inList = true; }
+      html += `<li>${line.replace(/^[-*]\s+/, "")}</li>`;
+    } else if (line === "") {
+      flush();
+    } else {
+      flush(); html += `<p>${line}</p>`;
+    }
+  }
+  flush();
+  return html || "<p></p>";
+}
+
+function scrollToBottom() {
+  requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+}
+
+function assistantAvatar() {
+  return `<span class="avatar"><svg viewBox="0 0 32 32" width="20" height="20">
+    <defs>
+      <linearGradient id="ga" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2AA4F4"/><stop offset="1" stop-color="#1B6EF3"/></linearGradient>
+      <linearGradient id="gb" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7B68EE"/><stop offset="1" stop-color="#E3008C"/></linearGradient>
+    </defs>
+    <path d="M16 3c5 0 8 3 9 7-2-2-4-3-7-3-4 0-7 3-7 7 0 3 1 5 3 7-4-1-7-4-7-9 0-5 4-9 9-9z" fill="url(#ga)"/>
+    <path d="M16 29c-5 0-8-3-9-7 2 2 4 3 7 3 4 0 7-3 7-7 0-3-1-5-3-7 4 1 7 4 7 9 0 5-4 9-9 9z" fill="url(#gb)"/>
+  </svg></span>`;
+}
+
+function addUserMessage(text) {
+  const el = document.createElement("div");
+  el.className = "msg user";
+  el.innerHTML = `<span class="avatar">You</span><div class="bubble"></div>`;
+  el.querySelector(".bubble").textContent = text;
+  chat.appendChild(el);
+  scrollToBottom();
+}
+
+function addTyping() {
+  const el = document.createElement("div");
+  el.className = "msg assistant";
+  el.innerHTML = `${assistantAvatar()}<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  chat.appendChild(el);
+  scrollToBottom();
+  return el;
+}
+
+function fillAssistant(el, result) {
+  const { answer, chart_url } = result;
+  const bubble = el.querySelector(".bubble");
+  let html = renderMarkdown(answer || "(no content)");
+  if (chart_url) {
+    const src = API_BASE + chart_url;
+    html += `<div class="chart"><img src="${src}" alt="Generated chart" loading="lazy" />
+             <div class="chart-cap">📊 Generated by DataAnalystAgent</div></div>`;
+  }
+  html += `
+    <div class="email-action">
+      <p>📧 是否需要将本次结果发送到邮箱？</p>
+      <button type="button" class="email-toggle">发送结果到 Email</button>
+      <form class="email-form" hidden>
+        <input type="email" name="email" placeholder="请输入接收邮箱" autocomplete="email" required />
+        <button type="submit">发送</button>
+      </form>
+      <div class="email-status" role="status" aria-live="polite"></div>
+    </div>`;
+  bubble.innerHTML = html;
+  wireEmailAction(bubble, result);
+  scrollToBottom();
+}
+
+function wireEmailAction(bubble, result) {
+  const toggle = bubble.querySelector(".email-toggle");
+  const form = bubble.querySelector(".email-form");
+  const emailInput = form.querySelector("input");
+  const submit = form.querySelector("button");
+  const status = bubble.querySelector(".email-status");
+
+  toggle.addEventListener("click", () => {
+    form.hidden = false;
+    toggle.hidden = true;
+    emailInput.focus();
+    scrollToBottom();
+  });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!emailInput.reportValidity()) return;
+
+    submit.disabled = true;
+    emailInput.disabled = true;
+    status.className = "email-status";
+    status.textContent = "正在发送…";
+
+    try {
+      const res = await fetch(`${API_BASE}/send-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: emailInput.value.trim(),
+          question: result.question,
+          answer: result.answer,
+          chart_url: result.chart_url,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || `HTTP ${res.status}`);
+      }
+      form.hidden = true;
+      status.className = "email-status success";
+      status.textContent = `已发送到 ${emailInput.value.trim()}`;
+    } catch (err) {
+      submit.disabled = false;
+      emailInput.disabled = false;
+      status.className = "email-status error";
+      status.textContent = err.message || String(err);
+    }
+    scrollToBottom();
+  });
+}
+
+function showError(el, message) {
+  el.querySelector(".bubble").innerHTML =
+    `<p>⚠️ Something went wrong: ${escapeHtml(message)}</p><p>Make sure the agents API is running (<code class="inline">uvicorn api:app --port 8000</code>).</p>`;
+}
+
+// ---------- send flow ----------
+async function send(text) {
+  if (busy || !text.trim()) return;
+  busy = true;
+  sendBtn.disabled = true;
+  if (welcome) welcome.remove();
+
+  addUserMessage(text);
+  input.value = "";
+  autosize();
+  const typingEl = addTyping();
+
+  try {
+    const res = await fetch(`${API_BASE}/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: text }),
+    });
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(`HTTP ${res.status} ${detail}`);
+    }
+    const data = await res.json();
+    fillAssistant(typingEl, data);
+  } catch (err) {
+    showError(typingEl, err.message || String(err));
+  } finally {
+    busy = false;
+    updateSendState();
+    input.focus();
+  }
+}
+
+// ---------- UI wiring ----------
+function autosize() {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 140) + "px";
+}
+function updateSendState() {
+  sendBtn.disabled = busy || input.value.trim() === "";
+}
+
+input.addEventListener("input", () => { autosize(); updateSendState(); });
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input.value); }
+});
+sendBtn.addEventListener("click", () => send(input.value));
+
+chips?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".chip");
+  if (btn) send(btn.textContent.trim());
+});
+
+newChatBtn.addEventListener("click", () => location.reload());
+
+updateSendState();
+input.focus();

@@ -1,0 +1,38 @@
+{
+  "$comment": "NL2Ontology examples: how natural-language questions map to the OPC ontology entities, properties and relationships, with expected answers (based on the mock data under ../data).",
+  "ontology": "opc",
+  "queries": [
+    {
+      "domain": "work",
+      "question": "Which projects are currently in progress?",
+      "entities": ["Project"],
+      "properties": ["name", "status"],
+      "traversal": [],
+      "expectedAnswer": "Mingrui Billing System Revamp (PRJ-001), Yuntu Data Dashboard (PRJ-002)"
+    },
+    {
+      "domain": "work",
+      "question": "Which tasks under PRJ-001 are not yet finished?",
+      "entities": ["Project", "Task"],
+      "properties": ["status", "title"],
+      "traversal": ["Project -has_task-> Task"],
+      "expectedAnswer": "Payment gateway integration (TSK-002, doing), Regression testing (TSK-006, todo)"
+    },
+    {
+      "domain": "finance",
+      "question": "Which projects does the business account fund, and what is the total budget?",
+      "entities": ["BankAccount", "Project"],
+      "properties": ["accountType", "budget"],
+      "traversal": ["BankAccount -funds-> Project"],
+      "expectedAnswer": "China Merchants Bank business account (ACC-001) funds PRJ-001 and PRJ-002, total budget 105,000 CNY"
+    },
+    {
+      "domain": "cross-domain",
+      "question": "What is the total estimated hours of projects funded by each bank account?",
+      "entities": ["BankAccount", "Project", "Task"],
+      "properties": ["estimateHours"],
+      "traversal": ["BankAccount -funds-> Project -has_task-> Task"],
+      "expectedAnswer": "ACC-001: PRJ-001(50h)+PRJ-002(42h)=92h; ACC-002: PRJ-003(18h)=18h"
+    }
+  ]
+}

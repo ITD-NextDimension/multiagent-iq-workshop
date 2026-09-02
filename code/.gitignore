@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Secrets / local config
+.env
+*/.env
+agents/.env
+
+# Generated artifacts
+agents/ontology_charts/*.png
+cloud/*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db

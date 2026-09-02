@@ -1,0 +1,16 @@
+[
+  {
+    "accountId": "ACC-001",
+    "bankName": "China Merchants Bank",
+    "accountType": "Business",
+    "balance": 186500.00,
+    "currency": "CNY"
+  },
+  {
+    "accountId": "ACC-002",
+    "bankName": "Alipay",
+    "accountType": "Personal Wallet",
+    "balance": 24380.50,
+    "currency": "CNY"
+  }
+]

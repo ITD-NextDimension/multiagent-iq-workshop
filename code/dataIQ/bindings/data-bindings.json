@@ -1,0 +1,39 @@
+{
+  "$comment": "Simulates Microsoft Fabric IQ Data Binding. Each entityType is bound to a OneLake data source (here a local JSON file stands in for a Lakehouse table).",
+  "ontology": "opc",
+  "ontologyFile": "../ontology/opc.rdf",
+  "namespace": "http://example.org/ontology/opc/",
+  "entityBindings": [
+    {
+      "entityType": "BankAccount",
+      "domain": "finance",
+      "source": { "type": "lakehouseTable", "path": "OneLake/opc_lakehouse/Tables/bank_account", "mock": "../data/bank_account.json" },
+      "identity": "accountId",
+      "propertyMap": {
+        "accountId": "accountId", "bankName": "bankName", "accountType": "accountType", "balance": "balance", "currency": "currency"
+      }
+    },
+    {
+      "entityType": "Project",
+      "domain": "work",
+      "source": { "type": "lakehouseTable", "path": "OneLake/opc_lakehouse/Tables/project", "mock": "../data/project.json" },
+      "identity": "projectId",
+      "propertyMap": {
+        "projectId": "projectId", "name": "name", "status": "status", "budget": "budget", "startDate": "startDate", "dueDate": "dueDate"
+      }
+    },
+    {
+      "entityType": "Task",
+      "domain": "work",
+      "source": { "type": "lakehouseTable", "path": "OneLake/opc_lakehouse/Tables/task", "mock": "../data/task.json" },
+      "identity": "taskId",
+      "propertyMap": {
+        "taskId": "taskId", "title": "title", "priority": "priority", "status": "status", "estimateHours": "estimateHours"
+      }
+    }
+  ],
+  "relationshipBindings": [
+    { "relationship": "funds",    "from": "BankAccount", "to": "Project", "cardinality": "one-to-many", "fromKey": "accountId", "toForeignKey": "accountId" },
+    { "relationship": "has_task", "from": "Project",     "to": "Task",    "cardinality": "one-to-many", "fromKey": "projectId", "toForeignKey": "projectId" }
+  ]
+}

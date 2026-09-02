@@ -1,0 +1,50 @@
+[
+  {
+    "taskId": "TSK-001",
+    "projectId": "PRJ-001",
+    "title": "Billing model design",
+    "priority": "high",
+    "status": "done",
+    "estimateHours": 16.0
+  },
+  {
+    "taskId": "TSK-002",
+    "projectId": "PRJ-001",
+    "title": "Payment gateway integration",
+    "priority": "high",
+    "status": "doing",
+    "estimateHours": 24.0
+  },
+  {
+    "taskId": "TSK-003",
+    "projectId": "PRJ-002",
+    "title": "Metric definition review",
+    "priority": "medium",
+    "status": "done",
+    "estimateHours": 12.0
+  },
+  {
+    "taskId": "TSK-004",
+    "projectId": "PRJ-002",
+    "title": "Dashboard frontend development",
+    "priority": "high",
+    "status": "doing",
+    "estimateHours": 30.0
+  },
+  {
+    "taskId": "TSK-005",
+    "projectId": "PRJ-003",
+    "title": "CI/CD pipeline setup",
+    "priority": "medium",
+    "status": "done",
+    "estimateHours": 18.0
+  },
+  {
+    "taskId": "TSK-006",
+    "projectId": "PRJ-001",
+    "title": "Regression testing",
+    "priority": "low",
+    "status": "todo",
+    "estimateHours": 10.0
+  }
+]

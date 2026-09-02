@@ -1,0 +1,7 @@
+# Keep ACR build context small and avoid baking local-only files into images.
+.git
+**/__pycache__
+**/*.pyc
+.vscode
+agents/.env
+agents/ontology_charts/*.png

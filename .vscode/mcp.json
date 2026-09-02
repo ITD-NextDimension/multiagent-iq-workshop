@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "opc-ontology": {
+      "type": "stdio",
+      "command": "conda",
+      "args": ["run", "-n", "agentdev", "python", "${workspaceFolder}/mcp/server.py"]
+    }
+  }
+}
