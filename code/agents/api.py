@@ -1,6 +1,6 @@
-"""FastAPI wrapper around the OPC multi-agent pipeline.
+"""FastAPI wrapper around the AI Company multi-agent pipeline.
 
-Run (from the agents/ folder, with the agentdev env active):
+Run (from the agents/ folder, with code/.venv activated):
 
     uvicorn api:app --reload --port 8000
 
@@ -27,7 +27,7 @@ from opc_agents.workflow import run_pipeline
 
 APP_DIR = Path(__file__).resolve().parent.parent / "app"
 
-app = FastAPI(title="OPC Ontology Agents API", version="1.0.0")
+app = FastAPI(title="AI Company Ontology Agents API", version="1.0.0")
 
 # Allow the chat UI to call the API from any origin (useful when opened standalone).
 app.add_middleware(

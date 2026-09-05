@@ -1,6 +1,6 @@
-"""OPC multi-agent package (Microsoft Agent Framework).
+"""AI Company multi-agent package (Microsoft Agent Framework).
 
-AssistantAgent (queries the dataIQ OPC ontology through an MCP server) +
+AssistantAgent (queries the dataIQ enterprise ontology through an MCP server) +
 DataAnalystAgent (Monty CodeAct that renders charts) composed into a
 sequential workflow.
 """

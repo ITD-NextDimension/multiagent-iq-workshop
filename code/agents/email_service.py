@@ -39,10 +39,10 @@ def send_result_email(
         "senderAddress": sender_address,
         "recipients": {"to": [{"address": recipient}]},
         "content": {
-            "subject": "Your OPC Copilot result",
+            "subject": "Your AI Company Copilot result",
             "plainText": f"Question:\n{question}\n\nResult:\n{answer}",
             "html": (
-                "<h2>OPC Copilot result</h2>"
+                "<h2>AI Company Copilot result</h2>"
                 f"<p><strong>Question</strong><br>{safe_question}</p>"
                 f"<p><strong>Result</strong></p><pre style=\"white-space:pre-wrap\">{safe_answer}</pre>"
             ),

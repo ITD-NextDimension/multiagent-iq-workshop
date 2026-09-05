@@ -1,6 +1,6 @@
-"""OPC Ontology MCP Server.
+"""AI Company Enterprise Ontology MCP Server.
 
-A Model Context Protocol server that lets you quickly query the OPC (One-Person Company)
+A Model Context Protocol server that lets you quickly query the AI Company enterprise
 ontology and the relationships between its data.
 
 It grounds every answer in three sources produced under ``dataIQ/`` and follows the
@@ -182,7 +182,7 @@ mcp = FastMCP("opc-ontology")
 
 @mcp.tool()
 def describe_ontology() -> dict[str, Any]:
-    """Return an overview of the OPC ontology: entity types (with properties and the
+    """Return an overview of the enterprise ontology: entity types (with properties and the
     identifier property) and the relationships with their cardinality."""
     return {
         "ontology": STORE.bindings.get("ontology", "opc"),

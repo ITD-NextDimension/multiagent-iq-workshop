@@ -1,6 +1,6 @@
 {
-  "name": "OPC One-Person Company",
-  "description": "Simplified One-Person-Company ontology for Microsoft Fabric IQ with 3 entities: Project, BankAccount, Task.",
+  "name": "AI Company Enterprise Ontology",
+  "description": "Simplified enterprise ontology for Microsoft Fabric IQ with 3 entities: Project, BankAccount, Task.",
   "icon": "🧑‍💻",
   "category": "finance",
   "author": "dataIQ"

@@ -8,8 +8,8 @@
     xmlns:ont="http://example.org/ontology/opc/">
 
     <owl:Ontology rdf:about="http://example.org/ontology/opc/">
-        <rdfs:label>OPC One-Person Company</rdfs:label>
-        <rdfs:comment>One-Person-Company business ontology for Microsoft Fabric IQ: Project, BankAccount, Task.</rdfs:comment>
+        <rdfs:label>AI Company Enterprise Ontology</rdfs:label>
+        <rdfs:comment>Enterprise business ontology for Microsoft Fabric IQ: Project, BankAccount, Task.</rdfs:comment>
     </owl:Ontology>
 
     <!-- ===================== -->

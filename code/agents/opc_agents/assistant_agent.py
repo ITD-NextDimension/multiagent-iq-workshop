@@ -1,4 +1,4 @@
-"""AssistantAgent that answers OPC questions via the dataIQ MCP server.
+"""AssistantAgent that answers enterprise questions via the dataIQ MCP server.
 
 Follows the MCP agent sample (python/samples/02-agents/mcp): an ``MCPStdioTool``
 spawns the local ``mcp/server.py`` (stdio) and exposes its ontology query tools
@@ -16,7 +16,7 @@ from agent_framework.openai import OpenAIChatCompletionClient
 from .config import MCP_SERVER, create_chat_client
 
 ASSISTANT_INSTRUCTIONS = (
-    "You are the OPC (one-person-company) data assistant. "
+    "You are the AI Company enterprise data assistant. "
     "Answer questions about the company's Projects, BankAccounts "
     "and Tasks, and the relationships between them, by calling the "
     "`opc_ontology` MCP tools: describe_ontology, list_entity_types, "
@@ -30,11 +30,11 @@ ASSISTANT_INSTRUCTIONS = (
 
 
 def create_ontology_mcp_tool() -> MCPStdioTool:
-    """Create the stdio MCP tool that runs the dataIQ OPC ontology server."""
+    """Create the stdio MCP tool that runs the dataIQ enterprise ontology server."""
     return MCPStdioTool(
         name="opc_ontology",
         description=(
-            "Query the OPC one-person-company ontology: projects, bank accounts, "
+            "Query the AI Company enterprise ontology: projects, bank accounts, "
             "tasks, and their relationships (funds, has_task)."
         ),
         command=sys.executable,

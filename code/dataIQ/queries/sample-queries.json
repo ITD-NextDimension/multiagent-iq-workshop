@@ -1,5 +1,5 @@
 {
-  "$comment": "NL2Ontology examples: how natural-language questions map to the OPC ontology entities, properties and relationships, with expected answers (based on the mock data under ../data).",
+  "$comment": "NL2Ontology examples: how natural-language questions map to the enterprise ontology entities, properties and relationships, with expected answers (based on the mock data under ../data).",
   "ontology": "opc",
   "queries": [
     {

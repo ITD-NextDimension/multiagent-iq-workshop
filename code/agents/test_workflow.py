@@ -1,4 +1,4 @@
-"""Tests for the OPC multi-agent pipeline.
+"""Tests for the AI Company multi-agent pipeline.
 
 Two layers:
 
