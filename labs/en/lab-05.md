@@ -1,5 +1,9 @@
 # Lab 05. Cloud Architecture and One-Command Deployment
 
+> **Short on quota or time?** Use [Lab 05-1](lab-05-1.md) instead: the instructor pre-provisions a
+> shared AKS, ACR, and Container Apps environment, and each participant deploys only their own web
+> front end in about 15 minutes — no `kubectl` required.
+
 ## Story
 
 The AI Company prototype has demonstrated value, so the enterprise platform team must turn it into

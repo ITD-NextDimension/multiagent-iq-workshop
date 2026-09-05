@@ -74,8 +74,9 @@ Mapping to the request:
 
 ```
 cloud/
-├── main.bicep                 # RG-scope orchestration
+├── main.bicep                 # RG-scope orchestration (full deploy)
 ├── main.bicepparam            # parameters (reads ACR_NAME / IMAGE_TAG env)
+├── web-only.bicep             # Lab 05-1: learner web app on shared resources
 ├── modules/
 │   ├── monitoring.bicep       # Log Analytics
 │   ├── registry.bicep         # Azure Container Registry (admin user enabled)
@@ -96,6 +97,8 @@ cloud/
 │   └── agents-service.yaml
 └── scripts/
     ├── deploy.sh              # one-command end-to-end deploy
+    ├── deploy-web-only.sh     # Lab 05-1: deploy only the learner web app
+    ├── workshop-web.env.example # Lab 05-1: shared-resource config template
     └── teardown.sh
 ```
 
@@ -150,6 +153,37 @@ az deployment group create -g rg-multiagent-iq -n opciq-main \
   -p location=swedencentral aksName=aks-iq-aks-agent-hol namePrefix=opciq \
      acrName=<acr-name> imageTag=latest foundryAccountName=my-ai-foundry
 ```
+
+## Lab 05-1: shared-resource track (`deploy-web-only.sh`)
+
+For classrooms where per-participant AKS is impractical, Lab 05-1 has each participant deploy
+**only** a web Container App against resources the instructor pre-provisions once.
+
+**Instructor, before class:**
+
+1. Run the full `deploy.sh` once to create the shared resource group, ACR, Container Apps
+   environment, pull identity, and the AKS Agent API.
+2. Push the web image with the tag participants will use (default `workshop`).
+3. Create a lab service principal and grant it **Contributor on that resource group only**.
+4. Copy `scripts/workshop-web.env.example` to `scripts/workshop-web.env`, fill in the shared
+   resource values, and hand the file to participants. It is gitignored — it carries real
+   subscription and resource identifiers, so distribute it directly, not through a public channel.
+   The client secret is **not** stored in the file; the script prompts for it at run time.
+
+**Participant, in class:**
+
+```bash
+cd code/cloud/scripts
+bash deploy-web-only.sh <app-name> --preview   # what-if, changes nothing
+bash deploy-web-only.sh <app-name>
+```
+
+`web-only.bicep` references the shared environment, registry, and identity as `existing` and
+creates a single Container App pinned to `minReplicas: 0` / `maxReplicas: 1` at
+`0.25 CPU / 0.5 GiB`. Participants get no model key, no ACS secret, and no Kubernetes access.
+
+**Instructor, after class:** delete the participant Container Apps by name. Participants run no
+delete commands — the resource group is shared.
 
 ## Tear down
 

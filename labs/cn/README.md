@@ -11,6 +11,7 @@
 | 03 | 创建 Agents | [lab-03.md](lab-03.md) | [code/agents](../../code/agents) |
 | 04 | 生成应用 app | [lab-04.md](lab-04.md) | [code/app](../../code/app) |
 | 05 | 云端结构与一键部署 | [lab-05.md](lab-05.md) | [code/cloud](../../code/cloud) |
+| 05-1 | *（替代）* 资源受限版：只部署 Web 应用 | [lab-05-1.md](lab-05-1.md) | [code/cloud](../../code/cloud) |
 
 ## 基本环境
 

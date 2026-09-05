@@ -14,6 +14,7 @@ answers grounded questions, produces visual analysis, and shares results with st
 | 03 | Create Agents | [lab-03.md](lab-03.md) | [code/agents](../../code/agents) |
 | 04 | Generate the app | [lab-04.md](lab-04.md) | [code/app](../../code/app) |
 | 05 | Cloud architecture and one-command deployment | [lab-05.md](lab-05.md) | [code/cloud](../../code/cloud) |
+| 05-1 | *(alternative)* Resource-constrained track: web app only | [lab-05-1.md](lab-05-1.md) | [code/cloud](../../code/cloud) |
 
 ## Base Environment
 

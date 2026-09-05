@@ -9,3 +9,6 @@
 
 # 上游仓库副本（含真实密钥，绝不能进版本库）
 docs/*.zip
+
+# Lab 05-1 讲师配置（含真实订阅与资源标识）
+code/cloud/scripts/workshop-web.env
