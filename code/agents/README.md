@@ -56,7 +56,9 @@ agents/
 ## Setup
 
 ```bash
-conda activate agentdev
+# from code/
+python3.12 -m venv .venv
+source .venv/bin/activate
 pip install -r agents/requirements.txt
 
 cp agents/.env.example agents/.env

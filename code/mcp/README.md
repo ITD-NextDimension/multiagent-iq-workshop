@@ -37,10 +37,12 @@ The server parses these files into memory on startup, so **restart after changin
 
 ## Environment and running
 
-Use the `agentdev` conda environment (Python 3.12):
+Use a virtual environment (Python 3.10-3.12):
 
 ```bash
-conda activate agentdev
+# from code/
+python3.12 -m venv .venv
+source .venv/bin/activate
 pip install -r mcp/requirements.txt
 
 # Smoke test (no MCP client required)
@@ -57,15 +59,16 @@ python mcp/server.py
   "servers": {
     "opc-ontology": {
       "type": "stdio",
-      "command": "conda",
-      "args": ["run", "-n", "agentdev", "python", "${workspaceFolder}/mcp/server.py"]
+      "command": "${workspaceFolder}/code/.venv/bin/python",
+      "args": ["${workspaceFolder}/code/mcp/server.py"]
     }
   }
 }
 ```
 
-> If `conda run` is not on PATH, replace `command` with the absolute path to the agentdev
-> Python (`conda activate agentdev && which python`).
+> Paths are relative to the repository root, so `server.py` is under `code/mcp/`, not `mcp/`.
+> On Windows work inside WSL, where the interpreter is `.venv/bin/python` as shown; a native
+> Windows venv would use `.venv\\Scripts\\python.exe` instead.
 
 ## Wire it into Claude Desktop (`claude_desktop_config.json`)
 
@@ -73,8 +76,8 @@ python mcp/server.py
 {
   "mcpServers": {
     "opc-ontology": {
-      "command": "conda",
-      "args": ["run", "-n", "agentdev", "python", "/path/to/AKS_MultiAgent_IQ/mcp/server.py"]
+      "command": "/path/to/multiagent-iq-workshop/code/.venv/bin/python",
+      "args": ["/path/to/multiagent-iq-workshop/code/mcp/server.py"]
     }
   }
 }

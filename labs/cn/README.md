@@ -15,17 +15,18 @@
 ## 基本环境
 
 - macOS、Linux 或 Windows WSL。
-- Python 3.12，推荐使用 `conda` 环境 `agentdev`。
+- Python 3.10–3.12（推荐 3.12；3.13 未验证）。
 - Azure CLI，并已执行 `az login`。
 - `kubectl`。
 - Azure OpenAI 或 Azure AI Foundry 模型部署。
-- 可访问本仓库根目录：`AKS_MultiAgent_IQ`。
+- 可访问本仓库根目录：`multiagent-iq-workshop`。
 
 本地初始化：
 
 ```bash
 cd code
-conda activate agentdev
+python3.12 -m venv .venv
+source .venv/bin/activate
 pip install -r mcp/requirements.txt
 pip install -r agents/requirements.txt
 cp agents/.env.example agents/.env

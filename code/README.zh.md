@@ -71,15 +71,16 @@
 
 ## 先决条件
 
-- 安装好依赖的 **conda** 环境 `agentdev`（Python 3.12）。
+- **Python 3.10–3.12**（推荐 3.12），以及一个装好依赖的虚拟环境。
 - 一个 **Azure OpenAI / Azure AI Foundry** 部署（供智能体与在线测试使用）。
 - 若使用 `AzureCliCredential`（而非 API Key），需执行 `az login`。
 
 ## 安装
 
 ```bash
-# 1. 激活环境
-conda activate agentdev
+# 1. 创建并激活虚拟环境（在 code/ 目录下）
+python3.12 -m venv .venv
+source .venv/bin/activate
 
 # 2. 安装依赖
 pip install -r mcp/requirements.txt

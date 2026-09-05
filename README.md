@@ -75,7 +75,7 @@ For the implementation-level README, see [code/README.md](code/README.md).
 ## Prerequisites
 
 - macOS, Linux, or Windows WSL.
-- Python 3.12, preferably through a `conda` environment named `agentdev`.
+- Python 3.10-3.12 (3.12 recommended; 3.13 is not validated).
 - Azure CLI with `az login` completed.
 - `kubectl` for AKS deployment.
 - An Azure OpenAI or Azure AI Foundry model deployment.
@@ -85,7 +85,8 @@ For the implementation-level README, see [code/README.md](code/README.md).
 
 ```bash
 cd code
-conda activate agentdev
+python3.12 -m venv .venv
+source .venv/bin/activate
 pip install -r mcp/requirements.txt
 pip install -r agents/requirements.txt
 cp agents/.env.example agents/.env
@@ -102,6 +103,10 @@ AZURE_OPENAI_API_VERSION=2024-10-21
 For local passwordless authentication, leave `AZURE_OPENAI_API_KEY` empty and rely on `az login`.
 
 ## Run Locally
+
+> Every command below prints an `IncompleteFieldDefinitionWarning` about a `lifespan`
+> field, emitted by `pydantic-settings` via the MCP SDK. It is harmless and the checks
+> still pass — no action needed.
 
 Validate the ontology and MCP tools:
 

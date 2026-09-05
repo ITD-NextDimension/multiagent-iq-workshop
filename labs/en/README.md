@@ -18,17 +18,18 @@ answers grounded questions, produces visual analysis, and shares results with st
 ## Base Environment
 
 - macOS, Linux, or Windows WSL.
-- Python 3.12, preferably in a `conda` environment named `agentdev`.
+- Python 3.10-3.12 (3.12 recommended; 3.13 is not validated).
 - Azure CLI with `az login` completed.
 - `kubectl`.
 - An Azure OpenAI or Azure AI Foundry model deployment.
-- Access to the repository root: `AKS_MultiAgent_IQ`.
+- Access to the repository root: `multiagent-iq-workshop`.
 
 Initialize locally:
 
 ```bash
 cd code
-conda activate agentdev
+python3.12 -m venv .venv
+source .venv/bin/activate
 pip install -r mcp/requirements.txt
 pip install -r agents/requirements.txt
 cp agents/.env.example agents/.env

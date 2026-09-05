@@ -70,7 +70,7 @@ Lab 目录：
 ## 先决条件
 
 - macOS、Linux 或 Windows WSL。
-- Python 3.12，推荐使用 `conda` 环境 `agentdev`。
+- Python 3.10–3.12（推荐 3.12；3.13 未验证）。
 - Azure CLI，并已执行 `az login`。
 - 用于 AKS 部署的 `kubectl`。
 - Azure OpenAI 或 Azure AI Foundry 模型部署。
@@ -80,7 +80,8 @@ Lab 目录：
 
 ```bash
 cd code
-conda activate agentdev
+python3.12 -m venv .venv
+source .venv/bin/activate
 pip install -r mcp/requirements.txt
 pip install -r agents/requirements.txt
 cp agents/.env.example agents/.env
@@ -97,6 +98,9 @@ AZURE_OPENAI_API_VERSION=2024-10-21
 如果本地使用无密钥认证，可保持 `AZURE_OPENAI_API_KEY` 为空，并依赖 `az login`。
 
 ## 本地运行
+
+> 下面每条命令都会打印一条关于 `lifespan` 字段的 `IncompleteFieldDefinitionWarning`，
+> 来自 MCP SDK 依赖的 `pydantic-settings`。这是无害的，检查仍会全部通过，无需处理。
 
 验证本体和 MCP 工具：
 

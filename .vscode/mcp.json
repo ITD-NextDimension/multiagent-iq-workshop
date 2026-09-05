@@ -2,8 +2,8 @@
   "servers": {
     "opc-ontology": {
       "type": "stdio",
-      "command": "conda",
-      "args": ["run", "-n", "agentdev", "python", "${workspaceFolder}/mcp/server.py"]
+      "command": "${workspaceFolder}/code/.venv/bin/python",
+      "args": ["${workspaceFolder}/code/mcp/server.py"]
     }
   }
 }

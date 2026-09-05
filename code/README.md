@@ -73,15 +73,16 @@ calls Azure Communication Services Email and attaches the chart when one exists.
 
 ## Prerequisites
 
-- **conda** environment `agentdev` (Python 3.12) with the packages installed.
+- **Python 3.10-3.12** (3.12 recommended) and a virtual environment with the packages installed.
 - An **Azure OpenAI / Azure AI Foundry** deployment (for the agents and live tests).
 - Azure CLI (`az login`) if you use `AzureCliCredential` instead of an API key.
 
 ## Setup
 
 ```bash
-# 1. Activate the environment
-conda activate agentdev
+# 1. Create and activate a virtual environment (from code/)
+python3.12 -m venv .venv
+source .venv/bin/activate
 
 # 2. Install dependencies
 pip install -r mcp/requirements.txt
