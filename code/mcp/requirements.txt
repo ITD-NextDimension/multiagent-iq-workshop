@@ -1,1 +1,2 @@
-mcp>=1.2.0
+# Pinned: mcp 2.x removed `mcp.server.fastmcp`, which server.py imports.
+mcp==1.29.0
