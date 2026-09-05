@@ -1,0 +1,657 @@
+<title>Windows 课前环境自检</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root {
+  --paper:      #F2F2F7;
+  --surface:    #FFFFFF;
+  --surface-2:  #F8F7FC;
+  --ink:        #16131F;
+  --ink-2:      #423C52;
+  --muted:      #6B6479;
+  --line:       #E1DDEA;
+  --line-2:     #C8C2D6;
+  --accent:     #5B34C4;
+  --accent-ink: #452591;
+  --accent-soft:#EDE7FF;
+  --ok:         #14724A;
+  --ok-soft:    #E1F3EA;
+  --warn:       #8C5A00;
+  --warn-soft:  #FBEFD9;
+  --bad:        #A82720;
+  --bad-soft:   #FBE7E5;
+
+  --step: 1px;
+  --radius: 6px;
+  --measure: 74ch;
+
+  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #0F0D16;
+    --surface:    #17141F;
+    --surface-2:  #1E1A29;
+    --ink:        #EBE7F3;
+    --ink-2:      #C6C0D4;
+    --muted:      #948CA4;
+    --line:       #2A2537;
+    --line-2:     #3D3650;
+    --accent:     #B49BFF;
+    --accent-ink: #CFC0FF;
+    --accent-soft:#241B45;
+    --ok:         #6ED3A3;
+    --ok-soft:    #10281E;
+    --warn:       #E7B45C;
+    --warn-soft:  #2B2113;
+    --bad:        #F08D85;
+    --bad-soft:   #2C1715;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:      #0F0D16;
+  --surface:    #17141F;
+  --surface-2:  #1E1A29;
+  --ink:        #EBE7F3;
+  --ink-2:      #C6C0D4;
+  --muted:      #948CA4;
+  --line:       #2A2537;
+  --line-2:     #3D3650;
+  --accent:     #B49BFF;
+  --accent-ink: #CFC0FF;
+  --accent-soft:#241B45;
+  --ok:         #6ED3A3;
+  --ok-soft:    #10281E;
+  --warn:       #E7B45C;
+  --warn-soft:  #2B2113;
+  --bad:        #F08D85;
+  --bad-soft:   #2C1715;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 24px 96px; }
+
+/* ---------- progress ---------- */
+.tracker {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: var(--step) solid var(--line);
+}
+.tracker-in { max-width: 920px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+.tracker-label {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em;
+  color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.tracker-bar { flex: 1; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.tracker-fill { height: 100%; width: 0%; background: var(--accent); transition: width .25s ease; }
+.tracker-reset {
+  font: inherit; font-size: 12px; color: var(--muted); background: none;
+  border: var(--step) solid var(--line-2); border-radius: 999px; padding: 2px 10px; cursor: pointer;
+}
+.tracker-reset:hover { color: var(--ink); border-color: var(--ink-2); }
+
+/* ---------- header ---------- */
+header.masthead { padding: 56px 0 40px; }
+.kicker {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
+}
+h1 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(2.1rem, 5.5vw, 3.1rem); line-height: 1.1;
+  letter-spacing: -.02em; margin: 0 0 18px; text-wrap: balance;
+}
+.standfirst { font-size: 1.06rem; color: var(--ink-2); max-width: var(--measure); margin: 0; }
+.standfirst strong { color: var(--ink); }
+.platform {
+  margin-top: 22px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;
+  padding: 12px 18px; border: var(--step) solid var(--accent);
+  border-radius: var(--radius); background: var(--accent-soft); font-size: .93rem;
+}
+.platform .badge {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+  background: var(--accent); color: #fff; border-radius: 3px; padding: 2px 8px; white-space: nowrap;
+}
+:root[data-theme="dark"] .platform .badge,
+:root:not([data-theme="light"]) .platform .badge { color: #0F0D16; }
+.deadline {
+  margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px 28px;
+  padding: 16px 20px; background: var(--surface);
+  border: var(--step) solid var(--line); border-radius: var(--radius);
+}
+.deadline div { font-size: .93rem; }
+.deadline b { font-family: var(--font-display); color: var(--accent-ink); }
+
+/* ---------- sections ---------- */
+section { margin-top: 56px; }
+h2 {
+  font-family: var(--font-display); font-weight: 600; font-size: 1.55rem;
+  letter-spacing: -.01em; margin: 0 0 6px; padding-bottom: 10px;
+  border-bottom: var(--step) solid var(--line-2);
+  display: flex; align-items: baseline; gap: 12px;
+}
+h2 .num { font-family: var(--font-mono); font-size: .82rem; color: var(--accent); font-weight: 500; }
+h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.08rem; margin: 32px 0 10px; }
+p { max-width: var(--measure); }
+.lede { color: var(--muted); font-size: .95rem; margin: 12px 0 0; }
+
+/* ---------- two-pass timeline ---------- */
+ol.passes { list-style: none; margin: 24px 0 0; padding: 0; }
+ol.passes li {
+  position: relative; padding: 0 0 28px 34px;
+  border-left: 2px solid var(--line-2);
+}
+ol.passes li:last-child { border-left-color: transparent; padding-bottom: 0; }
+ol.passes .dot {
+  position: absolute; left: -11px; top: 1px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-family: var(--font-mono); font-size: .68rem; font-weight: 500;
+  display: grid; place-items: center;
+}
+:root[data-theme="dark"] ol.passes .dot,
+:root:not([data-theme="light"]) ol.passes .dot { color: #0F0D16; }
+ol.passes .dot.pause { background: var(--warn); }
+ol.passes .head {
+  font-family: var(--font-display); font-weight: 600; font-size: 1.04rem;
+  display: block; margin: -3px 0 4px;
+}
+ol.passes .body { font-size: .94rem; color: var(--ink-2); margin: 0; }
+ol.passes .cmd { margin-top: 10px; }
+
+/* ---------- code ---------- */
+.cmd {
+  position: relative; background: var(--surface-2);
+  border: var(--step) solid var(--line); border-radius: var(--radius); overflow-x: auto;
+}
+.cmd pre {
+  margin: 0; padding: 14px 56px 14px 16px;
+  font-family: var(--font-mono); font-size: .82rem; line-height: 1.7;
+  color: var(--ink); white-space: pre;
+}
+.cmd .copy {
+  position: absolute; top: 8px; right: 8px;
+  font-family: var(--font-mono); font-size: 11px; padding: 3px 8px;
+  color: var(--muted); background: var(--surface);
+  border: var(--step) solid var(--line-2); border-radius: 4px; cursor: pointer;
+}
+.cmd .copy:hover { color: var(--accent); border-color: var(--accent); }
+code {
+  font-family: var(--font-mono); font-size: .86em; background: var(--surface-2);
+  border: var(--step) solid var(--line); border-radius: 4px; padding: .06em .34em;
+}
+
+/* ---------- callouts ---------- */
+.note {
+  margin-top: 18px; padding: 14px 18px; background: var(--surface);
+  border: var(--step) solid var(--line); border-left: 3px solid var(--line-2);
+  border-radius: 0 var(--radius) var(--radius) 0; font-size: .93rem; color: var(--ink-2);
+}
+.note.alert { border-left-color: var(--warn); background: var(--warn-soft); color: var(--ink); }
+.note.alert b { color: var(--warn); }
+.note p:first-child { margin-top: 0; }
+.note p:last-child { margin-bottom: 0; }
+
+/* ---------- receipt ---------- */
+.receipt { margin-top: 20px; display: grid; gap: 12px; }
+.receipt-pair { display: grid; gap: 6px; }
+.receipt-line {
+  font-family: var(--font-mono); font-size: .84rem; padding: 14px 16px;
+  border-radius: var(--radius); border: var(--step) solid; overflow-x: auto; white-space: pre;
+}
+.receipt-line.good { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.receipt-line.bad  { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.receipt-note { font-size: .93rem; color: var(--ink-2); margin: 0; }
+
+/* ---------- checklist groups ---------- */
+.group {
+  margin-top: 26px; background: var(--surface);
+  border: var(--step) solid var(--line); border-radius: var(--radius); overflow: hidden;
+}
+.group-head {
+  display: flex; align-items: baseline; gap: 12px; padding: 14px 20px;
+  background: var(--surface-2); border-bottom: var(--step) solid var(--line);
+}
+.group-head .tag {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em;
+  padding: 2px 7px; border-radius: 3px; background: var(--accent); color: #fff;
+}
+:root[data-theme="dark"] .group-head .tag,
+:root:not([data-theme="light"]) .group-head .tag { color: #0F0D16; }
+.group-head .title { font-family: var(--font-display); font-weight: 600; font-size: 1rem; }
+.group-head .when { font-size: .82rem; color: var(--muted); margin-left: auto; }
+
+ul.checks { list-style: none; margin: 0; padding: 6px 0; }
+ul.checks li {
+  display: flex; gap: 12px; align-items: flex-start; padding: 9px 20px;
+  font-size: .95rem; border-top: var(--step) solid transparent;
+}
+ul.checks li + li { border-top-color: var(--line); }
+ul.checks input[type="checkbox"] {
+  margin: .35em 0 0; width: 16px; height: 16px; flex: 0 0 auto;
+  accent-color: var(--accent); cursor: pointer;
+}
+ul.checks label { cursor: pointer; }
+ul.checks li.done label { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-2); }
+ul.checks .hint { display: block; font-size: .85rem; color: var(--muted); margin-top: 2px; }
+ul.checks li.done .hint { text-decoration: none; }
+ul.checks .auto {
+  font-family: var(--font-mono); font-size: .68rem; letter-spacing: .06em;
+  color: var(--ok); border: var(--step) solid var(--ok); border-radius: 3px;
+  padding: 0 5px; margin-left: 8px; white-space: nowrap; vertical-align: 1px;
+}
+ul.checks .manual { color: var(--warn); border-color: var(--warn); }
+
+/* ---------- tables ---------- */
+.table-wrap { overflow-x: auto; margin-top: 20px; }
+table {
+  width: 100%; border-collapse: collapse; font-size: .93rem;
+  background: var(--surface); border: var(--step) solid var(--line); border-radius: var(--radius);
+}
+th, td { text-align: left; padding: 11px 16px; border-bottom: var(--step) solid var(--line); vertical-align: top; }
+th {
+  font-family: var(--font-mono); font-size: .74rem; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--muted); background: var(--surface-2); white-space: nowrap;
+}
+tr:last-child td { border-bottom: none; }
+td.rank { font-family: var(--font-mono); color: var(--accent); font-variant-numeric: tabular-nums; width: 1%; }
+
+/* ---------- pitfalls ---------- */
+ol.pits { counter-reset: pit; list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 14px; }
+ol.pits li {
+  counter-increment: pit; background: var(--surface);
+  border: var(--step) solid var(--line); border-radius: var(--radius);
+  padding: 16px 20px 16px 56px; position: relative; font-size: .95rem;
+}
+ol.pits li::before {
+  content: counter(pit); position: absolute; left: 20px; top: 15px;
+  font-family: var(--font-mono); font-size: .8rem; color: var(--accent);
+  border: var(--step) solid var(--line-2); border-radius: 50%;
+  width: 22px; height: 22px; display: grid; place-items: center;
+}
+ol.pits b { font-family: var(--font-display); }
+ol.pits .fix { display: block; margin-top: 6px; color: var(--ink-2); }
+ol.pits .fix::before { content: "→ "; color: var(--accent); }
+
+footer {
+  margin-top: 64px; padding-top: 20px; border-top: var(--step) solid var(--line-2);
+  font-size: .86rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px;
+}
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+@media print {
+  .tracker, .cmd .copy, .tracker-reset { display: none; }
+  body { background: #fff; font-size: 11pt; }
+  section { break-inside: avoid; margin-top: 28px; }
+  .group, ol.pits li, table { break-inside: avoid; }
+}
+</style>
+
+<div class="tracker">
+  <div class="tracker-in">
+    <span class="tracker-label" id="count">0 / 0 项</span>
+    <div class="tracker-bar"><div class="tracker-fill" id="fill"></div></div>
+    <button class="tracker-reset" id="reset" type="button">清空</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="kicker">企业 AI 化转型 Lab · AI Company · 3 小时</p>
+  <h1>环境自检 · Windows</h1>
+  <p class="standfirst">
+    这 3 小时里你会亲手把本体、MCP、双智能体和 AKS 部署跑通一遍。<strong>前提是环境在你到场之前就已经就绪</strong>——
+    现场装依赖会吃掉整个第一节课。你不需要课程代码，讲师会单独发给你<strong>一个脚本文件</strong>，
+    跑完把回执发到班级群就算准备完毕。
+  </p>
+  <div class="platform">
+    <span class="badge">Windows + WSL</span>
+    <span>这一份只配 <code>workshop-precheck-windows.ps1</code>，而且<strong>要跑两遍、中间重启一次</strong>。用 Mac 的同学请找 macOS 版清单。</span>
+  </div>
+  <div class="deadline">
+    <div><b>什么时候做</b> · 开课前一天</div>
+    <div><b>要多久</b> · 含重启约 30 分钟，主要在等下载</div>
+    <div><b>怎么算完成</b> · 两行回执都显示 READY</div>
+  </div>
+</header>
+
+<section id="run">
+  <h2><span class="num">01</span>怎么跑这个脚本</h2>
+  <p>课程当天所有命令都在 <strong>WSL 的 Ubuntu</strong> 里敲——Lab 05 的部署脚本是 bash，PowerShell 跑不了。所以脚本第一件事就是把 WSL2 + Ubuntu 装上，这一步<strong>必须重启一次</strong>。<strong>只有这个体检脚本用 PowerShell。</strong></p>
+
+  <ol class="passes">
+    <li>
+      <span class="dot">1</span>
+      <span class="head">第 1 遍 · 在管理员 PowerShell 里</span>
+      <p class="body">开始菜单搜 <strong>PowerShell</strong> → <strong>右键 → 以管理员身份运行</strong>（装 WSL 需要），把 <code>workshop-precheck-windows.ps1</code> 存到「下载」文件夹，然后粘贴这一行回车。这一遍装的是 Windows 侧的东西：VS Code、四个扩展、WSL2 + Ubuntu。</p>
+      <div class="cmd"><pre>powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Downloads\workshop-precheck-windows.ps1" -Yes</pre></div>
+    </li>
+    <li>
+      <span class="dot pause">⏻</span>
+      <span class="head">中间 · 重启，并给 Ubuntu 设个用户名密码</span>
+      <p class="body">脚本装完 WSL 会让你重启，<strong>这是正常流程，不是出错</strong>。重启后 Ubuntu 窗口会自己弹出来，让你设一个用户名和密码——它跟你的 Windows 账号无关，随便设一个记得住的即可（<strong>敲密码时屏幕上不显示任何字符，这是正常的</strong>）。</p>
+    </li>
+    <li>
+      <span class="dot">2</span>
+      <span class="head">第 2 遍 · 同一条命令再跑一遍</span>
+      <p class="body">这一遍脚本会进到 Ubuntu 里面，装 Git、Python、课程依赖、<code>az</code> 和 <code>kubectl</code>，最后给你两行回执。</p>
+    </li>
+  </ol>
+
+  <div class="note">
+    电脑本来就装好 WSL2 + Ubuntu 的同学，第一遍就会一次跑完，没有重启环节。反复运行是安全的，装到一半断了就重跑。
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>参数</th><th>什么时候用</th></tr></thead>
+      <tbody>
+        <tr><td><code>-Yes</code></td><td><strong>推荐</strong>：全自动，不逐项问你</td></tr>
+        <tr><td>不加参数</td><td>想知道每一步装了什么，逐项确认</td></tr>
+        <tr><td><code>-CheckOnly</code></td><td>只体检 Windows 侧，一个字节都不装</td></tr>
+        <tr><td><code>-SkipAzure</code></td><td>暂时不装 Lab 05 的 <code>az</code> / <code>kubectl</code></td></tr>
+        <tr><td><code>-Distro &lt;名字&gt;</code></td><td>你已经在用别的发行版（默认 <code>Ubuntu</code>）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="receipt">
+  <h2><span class="num">02</span>跑完看最后两行</h2>
+  <p class="lede">Windows 侧和 Ubuntu 侧各出一行，<strong>两行都要 READY</strong> 才算完。</p>
+  <div class="receipt">
+    <div class="receipt-pair">
+      <div class="receipt-line good">[precheck] READY | windows+wsl | FAIL=0 WARN=0</div>
+      <div class="receipt-line good">[precheck-wsl] READY | ubuntu | Python 3.12.3 | FAIL=0</div>
+    </div>
+    <p class="receipt-note">完事，把这两行一起发到班级群。</p>
+    <div class="receipt-line bad">[precheck] NOT-READY | windows+wsl | FAIL=2 WARN=0</div>
+    <p class="receipt-note">结果表里每条 FAIL 都带一行「<strong>→ 修复：</strong>」，是可以直接复制的命令。照着做，然后<strong>重跑脚本</strong>，直到两行都变 READY。</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>报告</th><th>写在哪</th></tr></thead>
+      <tbody>
+        <tr><td>Windows 侧</td><td>桌面上的 <code>precheck-report-windows.txt</code></td></tr>
+        <tr><td>Ubuntu 侧</td><td>脚本结尾会打印一个可以直接粘进「文件资源管理器」地址栏的路径</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lede">实在搞不定，把桌面那个文件发到班级群，讲师课前处理。</p>
+</section>
+
+<section id="checklist">
+  <h2><span class="num">03</span>脚本会检查什么</h2>
+  <p class="lede">Windows 上的东西分两侧装，两侧互不相通——这是最容易搞混的地方。想手动核对、或者脚本跑不起来时照着做的，就是这几张表。勾选状态存在你自己的浏览器里，关掉页面也还在。</p>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">W</span>
+      <span class="title">Windows 侧</span>
+      <span class="when">第 1 遍装的</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="w1"><label for="w1"><strong>以管理员身份运行 PowerShell</strong><span class="auto">检测</span><span class="hint">装 WSL 必须要管理员权限</span></label></li>
+      <li><input type="checkbox" id="w2"><label for="w2"><strong>winget（应用安装程序）</strong><span class="auto">检测</span><span class="hint">脚本靠它装 VS Code · 缺了就去 Microsoft Store 装「应用安装程序 / App Installer」，然后重开 PowerShell</span></label></li>
+      <li><input type="checkbox" id="w3"><label for="w3"><strong>VS Code</strong><span class="auto">自动</span><span class="hint">Lab 02–04 用</span></label></li>
+      <li><input type="checkbox" id="w4"><label for="w4"><strong>扩展 WSL</strong>（<code>ms-vscode-remote.remote-wsl</code>）<span class="auto">自动</span><span class="hint">没有它，VS Code 打开的是 Windows 侧文件，解释器全对不上</span></label></li>
+      <li><input type="checkbox" id="w5"><label for="w5"><strong>扩展 GitHub Copilot</strong><span class="auto">自动</span><span class="hint">Lab 02–04 的动手点全靠它</span></label></li>
+      <li><input type="checkbox" id="w6"><label for="w6"><strong>扩展 GitHub Copilot Chat</strong><span class="auto">自动</span></label></li>
+      <li><input type="checkbox" id="w7"><label for="w7"><strong>扩展 Python</strong><span class="auto">自动</span><span class="hint">连上 WSL 后可能还要在 WSL 侧再装一次，见第 04 节</span></label></li>
+      <li><input type="checkbox" id="w8"><label for="w8"><strong>WSL2 + Ubuntu 发行版</strong><span class="auto">自动</span><span class="hint">装完必须重启，然后设 Ubuntu 的用户名密码</span></label></li>
+      <li><input type="checkbox" id="w9"><label for="w9"><strong>Chrome / Edge 新版</strong><span class="auto manual">手动</span><span class="hint">Lab 04 的聊天界面 · 脚本不检测，你自己确认</span></label></li>
+    </ul>
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">U</span>
+      <span class="title">Ubuntu 侧（WSL 里面）</span>
+      <span class="when">第 2 遍装的</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="u1"><label for="u1"><strong>网络能到 github.com / pypi.org / *.azure.com</strong><span class="auto">检测</span><span class="hint">装依赖和调 Azure 都要 · 失败时先怀疑公司代理与 VPN</span></label></li>
+      <li><input type="checkbox" id="u2"><label for="u2"><strong>Git、curl、python3-venv、python3-pip</strong><span class="auto">自动</span><span class="hint">用 apt 装 · 会问你要刚设的 Ubuntu 密码</span></label></li>
+      <li><input type="checkbox" id="u3"><label for="u3"><strong>Python 3.10 / 3.11 / 3.12</strong><span class="auto">自动</span><span class="hint">课程镜像用 3.12；3.13 没验证过</span></label></li>
+      <li><input type="checkbox" id="u4"><label for="u4"><strong>课程依赖预热</strong>（约 64 个包 / 装完 ~210MB）<span class="auto">自动</span><span class="hint">这是最耗时的一步 · 脚本建一个临时虚拟环境装一遍，把 pip 缓存填满，课上就是秒装</span></label></li>
+    </ul>
+  </div>
+
+  <div class="note">
+    依赖预热会在 Ubuntu 的 <code>~/frontier-workshop-precheck/</code> 下建一个临时虚拟环境。课后可以整个删掉，留着也不占多少地方。
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">B</span>
+      <span class="title">Lab 05 上云工具</span>
+      <span class="when">装在 Ubuntu 侧</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="b1"><label for="b1"><strong>Azure CLI（<code>az</code>）</strong><span class="auto">自动</span></label></li>
+      <li><input type="checkbox" id="b2"><label for="b2"><strong>az 扩展 <code>containerapp</code></strong><span class="auto">自动</span><span class="hint">部署脚本要用 · 不提前装的话，课上第一次跑部署会被「是否安装扩展」的提示卡住</span></label></li>
+      <li><input type="checkbox" id="b3"><label for="b3"><strong><code>kubectl</code></strong><span class="auto">自动</span></label></li>
+    </ul>
+  </div>
+
+  <div class="note">
+    <p>你<strong>不需要</strong>自己的 Azure 订阅或账号。课上讲师会发一组服务主体凭据，全班登录到同一个租户：</p>
+    <div class="cmd"><pre>az login --service-principal -u &lt;appId&gt; -p &lt;password&gt; --tenant &lt;tenantId&gt;</pre></div>
+    <p>这一步课上做，课前只要把这几个命令行工具装好。</p>
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">C</span>
+      <span class="title">可选</span>
+      <span class="when">装了更稳</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="c1"><label for="c1"><strong>Docker Desktop</strong><span class="auto manual">手动</span><span class="hint">依赖出问题时的兜底：课上直接用容器跑整套应用 · 装在 Windows 侧，设置里记得勾上 WSL2 backend</span></label></li>
+      <li><input type="checkbox" id="c2"><label for="c2"><strong>Claude Code / Claude Desktop / Cursor</strong><span class="auto manual">手动</span><span class="hint">Lab 02–03 会对比「同一个 MCP 服务器注册到不同客户端」，有就更直观</span></label></li>
+    </ul>
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">D</span>
+      <span class="title">讲师课上发给你</span>
+      <span class="when">课前不用准备</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="d1"><label for="d1">Azure OpenAI 的端点、模型名、API Key</label></li>
+      <li><input type="checkbox" id="d2"><label for="d2">Lab 05 的集群与镜像参数</label></li>
+      <li><input type="checkbox" id="d3"><label for="d3">服务主体凭据<span class="hint">appId / password / tenantId</span></label></li>
+    </ul>
+  </div>
+</section>
+
+<section id="manual">
+  <h2><span class="num">04</span>脚本查不了的事 · 手动 30 秒</h2>
+  <p class="lede">脚本能看到扩展装没装，<strong>但看不到你的 GitHub 登录状态和组织策略</strong>。Lab 02–04 全程依赖 Copilot，务必自己确认一遍。</p>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">手动</span>
+      <span class="title">先连进 WSL，再验 Copilot</span>
+      <span class="when">现场无法解决，必须课前发现</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="m1"><label for="m1">打开 VS Code，点左下角 <code>&gt;&lt;</code> → <strong>Connect to WSL</strong><span class="hint">课上全程要在这个状态下工作，否则用的是 Windows 侧的 Python</span></label></li>
+      <li><input type="checkbox" id="m2"><label for="m2">扩展面板里如果 Python 扩展显示 <strong>Install in WSL</strong>，点一下<span class="hint">扩展分 Windows 侧和 WSL 侧两套，脚本只装得了 Windows 侧那套</span></label></li>
+      <li><input type="checkbox" id="m3"><label for="m3">确认已登录 GitHub 账号</label></li>
+      <li><input type="checkbox" id="m4"><label for="m4">打开 Copilot Chat（<code>Ctrl+Alt+I</code>），确认输入框上方能切到 <strong>Agent</strong> 模式</label></li>
+      <li><input type="checkbox" id="m5"><label for="m5">在 Agent 模式里随便问一句，能正常回答</label></li>
+    </ul>
+  </div>
+
+  <div class="note alert">
+    <p><b>切不到 Agent 模式？</b>说明你所在 GitHub 组织的策略把它关掉了。这是唯一必须提前一天发现的问题，当天再找管理员来不及。→ 找组织的 GitHub 管理员开启；或者装 Claude Code / Cursor，Lab 02–04 用它们完成——MCP 协议完全一样，只是注册配置文件不同，讲义里两种写法都给了。</p>
+  </div>
+</section>
+
+<section id="pitfalls">
+  <h2><span class="num">05</span>Windows 上最常见的五个坑</h2>
+  <ol class="pits">
+    <li>
+      <b>把课程命令敲在 PowerShell 里</b>——课程里的 <code>.sh</code> 脚本在 PowerShell 跑不了。<strong>只有这个体检脚本用 PowerShell</strong>，上课的所有命令都在 WSL 的 Ubuntu 里敲。
+      <span class="fix">开始菜单搜 <code>Ubuntu</code> 打开终端，或在 VS Code 里 Connect to WSL 后用它自带的终端。</span>
+    </li>
+    <li>
+      <b>装完 WSL 没重启就继续</b>——症状是脚本反复说「未安装发行版 Ubuntu」。
+      <span class="fix">必须重启一次，并在 Ubuntu 窗口里设好用户名密码，然后重跑同一条命令。</span>
+    </li>
+    <li>
+      <b>PowerShell 不是以管理员身份打开的</b>——脚本会 WARN，然后装不了 WSL。
+      <span class="fix">开始菜单搜 PowerShell → 右键 → 以管理员身份运行，重新跑一遍。</span>
+    </li>
+    <li>
+      <b>VS Code 直接打开了 Windows 侧的文件夹</b>——解释器、虚拟环境、依赖全对不上，报错千奇百怪。
+      <span class="fix">一律用左下角 <code>&gt;&lt;</code> → Connect to WSL 打开项目。窗口左下角显示 <em>WSL: Ubuntu</em> 才算对。</span>
+    </li>
+    <li>
+      <b>公司电脑的网络策略</b>——代理 / VPN / 证书拦截会让 <code>pip</code> 和 <code>curl</code> 直接失败，这是最常见的 NOT-READY 原因。
+      <span class="fix">换个网络（手机热点最快）重跑一次，就能判断是不是网络问题。</span>
+    </li>
+  </ol>
+</section>
+
+<section id="fallback">
+  <h2><span class="num">06</span>自助排障顺序</h2>
+  <p class="lede">按这个顺序试。<strong>每一档都能让你完整跟完课</strong>，不用担心。</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th></th><th>做法</th><th>影响</th></tr></thead>
+      <tbody>
+        <tr><td class="rank">1</td><td>用管理员 PowerShell 重跑脚本（加 <code>-Yes</code>），按每条 FAIL 的「→ 修复：」处理</td><td>无</td></tr>
+        <tr><td class="rank">2</td><td>换个网络（手机热点）再跑一次</td><td>无</td></tr>
+        <tr><td class="rank">3</td><td>装 Docker Desktop —— 课上用容器跑，完全不依赖 WSL 里的 Python</td><td>Lab 01/02 改代码要在容器外做</td></tr>
+        <tr><td class="rank">4</td><td>把桌面上的 <code>precheck-report-windows.txt</code> 发到班级群，讲师课前帮你看</td><td>无，但要赶在开课前</td></tr>
+        <tr><td class="rank">5</td><td>现场和同学结对，两人一台机器</td><td>无</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="background">
+  <h2><span class="num">07</span>你需要具备的背景</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>必需</th><th>加分（不必需）</th></tr></thead>
+      <tbody>
+        <tr><td>能读懂 Python 函数与 JSON</td><td>用过 LLM API 或写过 prompt</td></tr>
+        <tr><td>会用命令行（cd / 运行脚本）</td><td>了解 RDF / 知识图谱</td></tr>
+        <tr><td>能看懂 YAML 大致结构</td><td>用过 Kubernetes</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lede"><strong>不需要</strong>你会写 Kubernetes、会写 Bicep、或了解本体论——这些课上会讲。</p>
+</section>
+
+<footer>
+  <span>企业 AI 化转型 Lab · AI Company</span>
+  <span>Windows + WSL 版</span>
+  <span>勾选状态只存在你这台设备的浏览器里</span>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var KEY = "workshop-precheck-win-v1";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('ul.checks input[type="checkbox"]'));
+  var fill = document.getElementById("fill");
+  var count = document.getElementById("count");
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function save(state) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* 隐私模式下写不进去，忽略 */ }
+  }
+
+  function render() {
+    var done = 0;
+    boxes.forEach(function (b) {
+      b.closest("li").classList.toggle("done", b.checked);
+      if (b.checked) done++;
+    });
+    fill.style.width = (boxes.length ? Math.round((done / boxes.length) * 100) : 0) + "%";
+    count.textContent = done + " / " + boxes.length + " 项";
+  }
+
+  var state = load();
+  boxes.forEach(function (b) {
+    if (state[b.id]) b.checked = true;
+    b.addEventListener("change", function () {
+      state[b.id] = b.checked;
+      save(state);
+      render();
+    });
+  });
+  render();
+
+  document.getElementById("reset").addEventListener("click", function () {
+    boxes.forEach(function (b) { b.checked = false; });
+    state = {};
+    save(state);
+    render();
+  });
+
+  function select(block) {
+    var range = document.createRange();
+    range.selectNodeContents(block.querySelector("pre"));
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  document.querySelectorAll(".cmd").forEach(function (block) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copy";
+    btn.textContent = "复制";
+    btn.addEventListener("click", function () {
+      var text = block.querySelector("pre").textContent;
+      var done = function () {
+        btn.textContent = "已复制";
+        setTimeout(function () { btn.textContent = "复制"; }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { select(block); });
+      } else {
+        select(block);
+      }
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>

@@ -68,7 +68,7 @@ Mapping to the request:
 - **AKS → ACR:** the cluster's kubelet identity has `AcrPull` on the registry.
 - **AKS agents → Azure Communication Services Email:** Bicep provisions an Azure-managed
   email domain. The deployment script retrieves the ACS connection string without printing it
-  and stores it with the generated `DoNotReply@...azurecomm.net` address in `opc-agents-secret`.
+  and stores it with the generated `DoNotReply@<azure-managed-domain>` address in `opc-agents-secret`.
 
 ## Files
 

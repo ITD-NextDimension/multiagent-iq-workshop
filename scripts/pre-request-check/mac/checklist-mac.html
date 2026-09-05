@@ -1,0 +1,608 @@
+<title>macOS 课前环境自检</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root {
+  --paper:      #F1F4F8;
+  --surface:    #FFFFFF;
+  --surface-2:  #F7F9FC;
+  --ink:        #131820;
+  --ink-2:      #3D4753;
+  --muted:      #66707D;
+  --line:       #DCE3EC;
+  --line-2:     #C3CEDC;
+  --accent:     #1F4FD8;
+  --accent-ink: #16389A;
+  --accent-soft:#E6EDFF;
+  --ok:         #14724A;
+  --ok-soft:    #E1F3EA;
+  --warn:       #8C5A00;
+  --warn-soft:  #FBEFD9;
+  --bad:        #A82720;
+  --bad-soft:   #FBE7E5;
+
+  --step: 1px;
+  --radius: 6px;
+  --measure: 74ch;
+
+  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #0D1117;
+    --surface:    #151B23;
+    --surface-2:  #1B222C;
+    --ink:        #E7ECF3;
+    --ink-2:      #C0C9D5;
+    --muted:      #8D97A5;
+    --line:       #262E39;
+    --line-2:     #38414F;
+    --accent:     #8AAAFF;
+    --accent-ink: #B3C6FF;
+    --accent-soft:#182444;
+    --ok:         #6ED3A3;
+    --ok-soft:    #10281E;
+    --warn:       #E7B45C;
+    --warn-soft:  #2B2113;
+    --bad:        #F08D85;
+    --bad-soft:   #2C1715;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:      #0D1117;
+  --surface:    #151B23;
+  --surface-2:  #1B222C;
+  --ink:        #E7ECF3;
+  --ink-2:      #C0C9D5;
+  --muted:      #8D97A5;
+  --line:       #262E39;
+  --line-2:     #38414F;
+  --accent:     #8AAAFF;
+  --accent-ink: #B3C6FF;
+  --accent-soft:#182444;
+  --ok:         #6ED3A3;
+  --ok-soft:    #10281E;
+  --warn:       #E7B45C;
+  --warn-soft:  #2B2113;
+  --bad:        #F08D85;
+  --bad-soft:   #2C1715;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 24px 96px; }
+
+/* ---------- progress ---------- */
+.tracker {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: var(--step) solid var(--line);
+}
+.tracker-in { max-width: 920px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+.tracker-label {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em;
+  color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.tracker-bar { flex: 1; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.tracker-fill { height: 100%; width: 0%; background: var(--accent); transition: width .25s ease; }
+.tracker-reset {
+  font: inherit; font-size: 12px; color: var(--muted); background: none;
+  border: var(--step) solid var(--line-2); border-radius: 999px; padding: 2px 10px; cursor: pointer;
+}
+.tracker-reset:hover { color: var(--ink); border-color: var(--ink-2); }
+
+/* ---------- header ---------- */
+header.masthead { padding: 56px 0 40px; }
+.kicker {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
+}
+h1 {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(2.1rem, 5.5vw, 3.1rem); line-height: 1.1;
+  letter-spacing: -.02em; margin: 0 0 18px; text-wrap: balance;
+}
+.standfirst { font-size: 1.06rem; color: var(--ink-2); max-width: var(--measure); margin: 0; }
+.standfirst strong { color: var(--ink); }
+.platform {
+  margin-top: 22px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;
+  padding: 12px 18px; border: var(--step) solid var(--accent);
+  border-radius: var(--radius); background: var(--accent-soft); font-size: .93rem;
+}
+.platform .badge {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+  background: var(--accent); color: #fff; border-radius: 3px; padding: 2px 8px; white-space: nowrap;
+}
+:root[data-theme="dark"] .platform .badge,
+:root:not([data-theme="light"]) .platform .badge { color: #0D1117; }
+.deadline {
+  margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px 28px;
+  padding: 16px 20px; background: var(--surface);
+  border: var(--step) solid var(--line); border-radius: var(--radius);
+}
+.deadline div { font-size: .93rem; }
+.deadline b { font-family: var(--font-display); color: var(--accent-ink); }
+
+/* ---------- sections ---------- */
+section { margin-top: 56px; }
+h2 {
+  font-family: var(--font-display); font-weight: 600; font-size: 1.55rem;
+  letter-spacing: -.01em; margin: 0 0 6px; padding-bottom: 10px;
+  border-bottom: var(--step) solid var(--line-2);
+  display: flex; align-items: baseline; gap: 12px;
+}
+h2 .num { font-family: var(--font-mono); font-size: .82rem; color: var(--accent); font-weight: 500; }
+h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.08rem; margin: 32px 0 10px; }
+p { max-width: var(--measure); }
+.lede { color: var(--muted); font-size: .95rem; margin: 12px 0 0; }
+
+/* ---------- prerequisite ---------- */
+.prereq {
+  margin-top: 20px; background: var(--surface);
+  border: var(--step) solid var(--line); border-left: 3px solid var(--warn);
+  border-radius: 0 var(--radius) var(--radius) 0; padding: 18px 20px 20px;
+}
+.prereq .zero {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--warn); margin: 0 0 8px;
+}
+.prereq h3 { margin: 0 0 8px; font-size: 1.1rem; }
+.prereq p { font-size: .93rem; color: var(--ink-2); margin: 0 0 12px; }
+
+/* ---------- code ---------- */
+.cmd {
+  position: relative; background: var(--surface-2);
+  border: var(--step) solid var(--line); border-radius: var(--radius); overflow-x: auto;
+}
+.cmd pre {
+  margin: 0; padding: 14px 56px 14px 16px;
+  font-family: var(--font-mono); font-size: .82rem; line-height: 1.7;
+  color: var(--ink); white-space: pre;
+}
+.cmd + .cmd { margin-top: 10px; }
+.cmd .copy {
+  position: absolute; top: 8px; right: 8px;
+  font-family: var(--font-mono); font-size: 11px; padding: 3px 8px;
+  color: var(--muted); background: var(--surface);
+  border: var(--step) solid var(--line-2); border-radius: 4px; cursor: pointer;
+}
+.cmd .copy:hover { color: var(--accent); border-color: var(--accent); }
+code {
+  font-family: var(--font-mono); font-size: .86em; background: var(--surface-2);
+  border: var(--step) solid var(--line); border-radius: 4px; padding: .06em .34em;
+}
+
+/* ---------- callouts ---------- */
+.note {
+  margin-top: 18px; padding: 14px 18px; background: var(--surface);
+  border: var(--step) solid var(--line); border-left: 3px solid var(--line-2);
+  border-radius: 0 var(--radius) var(--radius) 0; font-size: .93rem; color: var(--ink-2);
+}
+.note.alert { border-left-color: var(--warn); background: var(--warn-soft); color: var(--ink); }
+.note.alert b { color: var(--warn); }
+.note p:first-child { margin-top: 0; }
+.note p:last-child { margin-bottom: 0; }
+
+/* ---------- receipt ---------- */
+.receipt { margin-top: 20px; display: grid; gap: 12px; }
+.receipt-line {
+  font-family: var(--font-mono); font-size: .84rem; padding: 14px 16px;
+  border-radius: var(--radius); border: var(--step) solid; overflow-x: auto; white-space: pre;
+}
+.receipt-line.good { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.receipt-line.bad  { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.receipt-note { font-size: .93rem; color: var(--ink-2); margin: 0; }
+
+/* ---------- checklist groups ---------- */
+.group {
+  margin-top: 26px; background: var(--surface);
+  border: var(--step) solid var(--line); border-radius: var(--radius); overflow: hidden;
+}
+.group-head {
+  display: flex; align-items: baseline; gap: 12px; padding: 14px 20px;
+  background: var(--surface-2); border-bottom: var(--step) solid var(--line);
+}
+.group-head .tag {
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em;
+  padding: 2px 7px; border-radius: 3px; background: var(--accent); color: #fff;
+}
+:root[data-theme="dark"] .group-head .tag,
+:root:not([data-theme="light"]) .group-head .tag { color: #0D1117; }
+.group-head .title { font-family: var(--font-display); font-weight: 600; font-size: 1rem; }
+.group-head .when { font-size: .82rem; color: var(--muted); margin-left: auto; }
+
+ul.checks { list-style: none; margin: 0; padding: 6px 0; }
+ul.checks li {
+  display: flex; gap: 12px; align-items: flex-start; padding: 9px 20px;
+  font-size: .95rem; border-top: var(--step) solid transparent;
+}
+ul.checks li + li { border-top-color: var(--line); }
+ul.checks input[type="checkbox"] {
+  margin: .35em 0 0; width: 16px; height: 16px; flex: 0 0 auto;
+  accent-color: var(--accent); cursor: pointer;
+}
+ul.checks label { cursor: pointer; }
+ul.checks li.done label { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-2); }
+ul.checks .hint { display: block; font-size: .85rem; color: var(--muted); margin-top: 2px; }
+ul.checks li.done .hint { text-decoration: none; }
+ul.checks .auto {
+  font-family: var(--font-mono); font-size: .68rem; letter-spacing: .06em;
+  color: var(--ok); border: var(--step) solid var(--ok); border-radius: 3px;
+  padding: 0 5px; margin-left: 8px; white-space: nowrap; vertical-align: 1px;
+}
+ul.checks .manual { color: var(--warn); border-color: var(--warn); }
+
+/* ---------- tables ---------- */
+.table-wrap { overflow-x: auto; margin-top: 20px; }
+table {
+  width: 100%; border-collapse: collapse; font-size: .93rem;
+  background: var(--surface); border: var(--step) solid var(--line); border-radius: var(--radius);
+}
+th, td { text-align: left; padding: 11px 16px; border-bottom: var(--step) solid var(--line); vertical-align: top; }
+th {
+  font-family: var(--font-mono); font-size: .74rem; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--muted); background: var(--surface-2); white-space: nowrap;
+}
+tr:last-child td { border-bottom: none; }
+td.rank { font-family: var(--font-mono); color: var(--accent); font-variant-numeric: tabular-nums; width: 1%; }
+
+/* ---------- pitfalls ---------- */
+ol.pits { counter-reset: pit; list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 14px; }
+ol.pits li {
+  counter-increment: pit; background: var(--surface);
+  border: var(--step) solid var(--line); border-radius: var(--radius);
+  padding: 16px 20px 16px 56px; position: relative; font-size: .95rem;
+}
+ol.pits li::before {
+  content: counter(pit); position: absolute; left: 20px; top: 15px;
+  font-family: var(--font-mono); font-size: .8rem; color: var(--accent);
+  border: var(--step) solid var(--line-2); border-radius: 50%;
+  width: 22px; height: 22px; display: grid; place-items: center;
+}
+ol.pits b { font-family: var(--font-display); }
+ol.pits .fix { display: block; margin-top: 6px; color: var(--ink-2); }
+ol.pits .fix::before { content: "→ "; color: var(--accent); }
+
+footer {
+  margin-top: 64px; padding-top: 20px; border-top: var(--step) solid var(--line-2);
+  font-size: .86rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px;
+}
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+@media print {
+  .tracker, .cmd .copy, .tracker-reset { display: none; }
+  body { background: #fff; font-size: 11pt; }
+  section { break-inside: avoid; margin-top: 28px; }
+  .group, ol.pits li, table { break-inside: avoid; }
+}
+</style>
+
+<div class="tracker">
+  <div class="tracker-in">
+    <span class="tracker-label" id="count">0 / 0 项</span>
+    <div class="tracker-bar"><div class="tracker-fill" id="fill"></div></div>
+    <button class="tracker-reset" id="reset" type="button">清空</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="kicker">企业 AI 化转型 Lab · AI Company · 3 小时</p>
+  <h1>环境自检 · macOS</h1>
+  <p class="standfirst">
+    这 3 小时里你会亲手把本体、MCP、双智能体和 AKS 部署跑通一遍。<strong>前提是环境在你到场之前就已经就绪</strong>——
+    现场装依赖会吃掉整个第一节课。你不需要课程代码，讲师会单独发给你<strong>一个脚本文件</strong>，
+    跑完把回执发到班级群就算准备完毕。
+  </p>
+  <div class="platform">
+    <span class="badge">macOS / Linux</span>
+    <span>这一份只配 <code>workshop-precheck-mac.sh</code>。用 Windows 的同学请找 Windows 版清单，两份的步骤完全不同。Linux 同学也用这一份，脚本会自动改走 <code>apt</code>。</span>
+  </div>
+  <div class="deadline">
+    <div><b>什么时候做</b> · 开课前一天</div>
+    <div><b>要多久</b> · 顺利的话 15 分钟，主要在等下载</div>
+    <div><b>怎么算完成</b> · 回执显示 READY</div>
+  </div>
+</header>
+
+<section id="run">
+  <h2><span class="num">01</span>怎么跑这个脚本</h2>
+
+  <div class="prereq">
+    <p class="zero">跑之前 · 唯一一件脚本替你做不了的事</p>
+    <h3>先确认装了 Homebrew</h3>
+    <p>脚本在 macOS 上装东西全靠它，没有就只能报 FAIL。先在「终端」里敲这一行看看：</p>
+    <div class="cmd"><pre>brew --version</pre></div>
+    <p style="margin:12px 0 0">打印出版本号就可以往下走。提示 <code>command not found</code> 的话，先跑官网这条命令装上（会问你要开机密码，装完可能要几分钟）：</p>
+    <div class="cmd"><pre>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/brew/HEAD/install.sh)"</pre></div>
+  </div>
+
+  <h3>然后跑体检脚本</h3>
+  <ol style="max-width:var(--measure);color:var(--ink-2)">
+    <li>把 <code>workshop-precheck-mac.sh</code> 存到「下载」文件夹</li>
+    <li>打开「终端」（聚焦搜索 <code>Terminal</code>）</li>
+    <li>粘贴这一行，回车</li>
+  </ol>
+  <div class="cmd"><pre>bash ~/Downloads/workshop-precheck-mac.sh --yes</pre></div>
+  <p class="lede">中途会问你要开机密码（装 Homebrew 包时用），这是正常的。反复运行是安全的，装到一半断了就重跑。</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>参数</th><th>什么时候用</th></tr></thead>
+      <tbody>
+        <tr><td><code>--yes</code></td><td><strong>推荐</strong>：全自动，不逐项问你</td></tr>
+        <tr><td>不加参数</td><td>想知道每一步装了什么，逐项确认</td></tr>
+        <tr><td><code>--check-only</code></td><td>只体检，一个字节都不装</td></tr>
+        <tr><td><code>--skip-azure</code></td><td>暂时不装 Lab 05 的 <code>az</code> / <code>kubectl</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="receipt">
+  <h2><span class="num">02</span>跑完看最后一行</h2>
+  <div class="receipt">
+    <div class="receipt-line good">[precheck] READY | macos | Python 3.12.12 | FAIL=0 WARN=0</div>
+    <p class="receipt-note">完事，把这行发到班级群。</p>
+    <div class="receipt-line bad">[precheck] NOT-READY | macos | Python 3.12.12 | FAIL=2 WARN=0</div>
+    <p class="receipt-note">结果表里每条 FAIL 都带一行「<strong>→ 修复：</strong>」，是可以直接复制的命令。照着做，然后<strong>重跑脚本</strong>，直到变 READY。</p>
+  </div>
+
+  <p class="lede">完整报告写在 <code>~/frontier-workshop-precheck/precheck-report.txt</code>。实在搞不定，把这个文件发到班级群，讲师课前处理。</p>
+</section>
+
+<section id="checklist">
+  <h2><span class="num">03</span>脚本会检查什么</h2>
+  <p class="lede">想手动核对、或者脚本跑不起来时照着做的，就是这几张表。勾选状态存在你自己的浏览器里，关掉页面也还在。</p>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">A</span>
+      <span class="title">必备</span>
+      <span class="when">缺一样就上不了课</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="a1"><label for="a1"><strong>网络能到 github.com / pypi.org / *.azure.com</strong><span class="auto">检测</span><span class="hint">装依赖和调 Azure 都要 · 失败时先怀疑公司代理与 VPN</span></label></li>
+      <li><input type="checkbox" id="a2"><label for="a2"><strong>Homebrew</strong><span class="auto manual">手动</span><span class="hint">脚本只检测不代装 · 见上面「跑之前」那一段</span></label></li>
+      <li><input type="checkbox" id="a3"><label for="a3"><strong>Git</strong><span class="auto">自动</span><span class="hint">课上克隆课程仓库要用 · <code>brew install git</code></span></label></li>
+      <li><input type="checkbox" id="a4"><label for="a4"><strong>Python 3.10 / 3.11 / 3.12</strong><span class="auto">自动</span><span class="hint">系统自带的 3.9 不够用，脚本会另装 <code>python@3.12</code>；3.13 没验证过</span></label></li>
+      <li><input type="checkbox" id="a5"><label for="a5"><strong>课程依赖预热</strong>（约 64 个包 / 装完 ~210MB）<span class="auto">自动</span><span class="hint">这是最耗时的一步 · 脚本建一个临时虚拟环境装一遍，把 pip 缓存填满，课上就是秒装</span></label></li>
+      <li><input type="checkbox" id="a6"><label for="a6"><strong>VS Code</strong><span class="auto">自动</span><span class="hint">Lab 02–04 用 · <code>brew install --cask visual-studio-code</code></span></label></li>
+      <li><input type="checkbox" id="a7"><label for="a7"><strong>扩展 GitHub Copilot</strong><span class="auto">自动</span><span class="hint">Lab 02–04 的动手点全靠它</span></label></li>
+      <li><input type="checkbox" id="a8"><label for="a8"><strong>扩展 GitHub Copilot Chat</strong><span class="auto">自动</span></label></li>
+      <li><input type="checkbox" id="a9"><label for="a9"><strong>扩展 Python</strong><span class="auto">自动</span><span class="hint">语法高亮与解释器选择</span></label></li>
+      <li><input type="checkbox" id="a10"><label for="a10"><strong>Chrome / Edge 新版</strong><span class="auto manual">手动</span><span class="hint">Lab 04 的聊天界面 · 脚本不检测，你自己确认</span></label></li>
+    </ul>
+  </div>
+
+  <div class="note">
+    依赖预热会在 <code>~/frontier-workshop-precheck/</code> 下建一个临时虚拟环境。课后可以整个删掉，留着也不占多少地方。
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">B</span>
+      <span class="title">Lab 05 上云工具</span>
+      <span class="when">最后 30 分钟才用，但要提前装</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="b1"><label for="b1"><strong>Azure CLI（<code>az</code>）</strong><span class="auto">自动</span><span class="hint"><code>brew install azure-cli</code></span></label></li>
+      <li><input type="checkbox" id="b2"><label for="b2"><strong>az 扩展 <code>containerapp</code></strong><span class="auto">自动</span><span class="hint">部署脚本要用 · 不提前装的话，课上第一次跑部署会被「是否安装扩展」的提示卡住</span></label></li>
+      <li><input type="checkbox" id="b3"><label for="b3"><strong><code>kubectl</code></strong><span class="auto">自动</span><span class="hint"><code>brew install kubernetes-cli</code></span></label></li>
+    </ul>
+  </div>
+
+  <div class="note">
+    <p>你<strong>不需要</strong>自己的 Azure 订阅或账号。课上讲师会发一组服务主体凭据，全班登录到同一个租户：</p>
+    <div class="cmd"><pre>az login --service-principal -u &lt;appId&gt; -p &lt;password&gt; --tenant &lt;tenantId&gt;</pre></div>
+    <p>这一步课上做，课前只要把这几个命令行工具装好。</p>
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">C</span>
+      <span class="title">可选</span>
+      <span class="when">装了更稳</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="c1"><label for="c1"><strong>Docker Desktop</strong><span class="auto manual">手动</span><span class="hint">依赖出问题时的兜底：课上直接用容器跑整套应用，完全不依赖本机 Python · 脚本只检测，不代装</span></label></li>
+      <li><input type="checkbox" id="c2"><label for="c2"><strong>Claude Code / Claude Desktop / Cursor</strong><span class="auto manual">手动</span><span class="hint">Lab 02–03 会对比「同一个 MCP 服务器注册到不同客户端」，有就更直观</span></label></li>
+    </ul>
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">D</span>
+      <span class="title">讲师课上发给你</span>
+      <span class="when">课前不用准备</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="d1"><label for="d1">Azure OpenAI 的端点、模型名、API Key</label></li>
+      <li><input type="checkbox" id="d2"><label for="d2">Lab 05 的集群与镜像参数</label></li>
+      <li><input type="checkbox" id="d3"><label for="d3">服务主体凭据<span class="hint">appId / password / tenantId</span></label></li>
+    </ul>
+  </div>
+</section>
+
+<section id="manual">
+  <h2><span class="num">04</span>脚本查不了的事 · 手动 30 秒</h2>
+  <p class="lede">脚本能看到扩展装没装，<strong>但看不到你的 GitHub 登录状态和组织策略</strong>。Lab 02–04 全程依赖 Copilot，务必自己确认一遍。</p>
+
+  <div class="group">
+    <div class="group-head">
+      <span class="tag">手动</span>
+      <span class="title">Copilot Agent 模式</span>
+      <span class="when">现场无法解决，必须课前发现</span>
+    </div>
+    <ul class="checks">
+      <li><input type="checkbox" id="m1"><label for="m1">打开 VS Code</label></li>
+      <li><input type="checkbox" id="m2"><label for="m2">确认已登录 GitHub 账号</label></li>
+      <li><input type="checkbox" id="m3"><label for="m3">打开 Copilot Chat（<code>⌃⌘I</code>），确认输入框上方能切到 <strong>Agent</strong> 模式</label></li>
+      <li><input type="checkbox" id="m4"><label for="m4">在 Agent 模式里随便问一句，能正常回答</label></li>
+    </ul>
+  </div>
+
+  <div class="note alert">
+    <p><b>切不到 Agent 模式？</b>说明你所在 GitHub 组织的策略把它关掉了。这是唯一必须提前一天发现的问题，当天再找管理员来不及。→ 找组织的 GitHub 管理员开启；或者装 Claude Code / Cursor，Lab 02–04 用它们完成——MCP 协议完全一样，只是注册配置文件不同，讲义里两种写法都给了。</p>
+  </div>
+</section>
+
+<section id="pitfalls">
+  <h2><span class="num">05</span>macOS 上最常见的四个坑</h2>
+  <ol class="pits">
+    <li>
+      <b>没装 Homebrew</b>——脚本在 macOS 上装东西全靠它，没有就只能一路报 FAIL。
+      <span class="fix">先跑官网那条安装命令，再跑体检脚本。见上面「跑之前」。</span>
+    </li>
+    <li>
+      <b>以为系统自带的 Python 够用</b>——macOS 自带的 <code>python3</code> 是 3.9，课程依赖只在 3.10–3.12 上验证过。
+      <span class="fix">脚本会另装 <code>python@3.12</code> 并在结果里打印出它的完整路径。课上建虚拟环境时用那个路径，或直接 <code>python3.12 -m venv .venv</code>。</span>
+    </li>
+    <li>
+      <b>公司电脑的网络策略</b>——代理 / VPN / 证书拦截会让 <code>pip</code> 和 <code>curl</code> 直接失败，这是最常见的 NOT-READY 原因。
+      <span class="fix">换个网络（手机热点最快）重跑一次，就能判断是不是网络问题。</span>
+    </li>
+    <li>
+      <b>终端里敲 <code>code .</code> 说找不到命令</b>——VS Code 装了，但没把 <code>code</code> 命令注册进 PATH。体检不受影响（脚本会去 <code>/Applications</code> 里找），但课上会别扭。
+      <span class="fix">在 VS Code 里按 <code>⇧⌘P</code>，执行 <em>Shell Command: Install 'code' command in PATH</em>。</span>
+    </li>
+  </ol>
+</section>
+
+<section id="fallback">
+  <h2><span class="num">06</span>自助排障顺序</h2>
+  <p class="lede">按这个顺序试。<strong>每一档都能让你完整跟完课</strong>，不用担心。</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th></th><th>做法</th><th>影响</th></tr></thead>
+      <tbody>
+        <tr><td class="rank">1</td><td>重跑脚本（加 <code>--yes</code>），按每条 FAIL 的「→ 修复：」处理</td><td>无</td></tr>
+        <tr><td class="rank">2</td><td>换个网络（手机热点）再跑一次</td><td>无</td></tr>
+        <tr><td class="rank">3</td><td>装 Docker Desktop —— 课上用容器跑，完全不依赖本机 Python</td><td>Lab 01/02 改代码要在容器外做</td></tr>
+        <tr><td class="rank">4</td><td>把 <code>~/frontier-workshop-precheck/precheck-report.txt</code> 发到班级群，讲师课前帮你看</td><td>无，但要赶在开课前</td></tr>
+        <tr><td class="rank">5</td><td>现场和同学结对，两人一台机器</td><td>无</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="background">
+  <h2><span class="num">07</span>你需要具备的背景</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>必需</th><th>加分（不必需）</th></tr></thead>
+      <tbody>
+        <tr><td>能读懂 Python 函数与 JSON</td><td>用过 LLM API 或写过 prompt</td></tr>
+        <tr><td>会用命令行（cd / 运行脚本）</td><td>了解 RDF / 知识图谱</td></tr>
+        <tr><td>能看懂 YAML 大致结构</td><td>用过 Kubernetes</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lede"><strong>不需要</strong>你会写 Kubernetes、会写 Bicep、或了解本体论——这些课上会讲。</p>
+</section>
+
+<footer>
+  <span>企业 AI 化转型 Lab · AI Company</span>
+  <span>macOS / Linux 版</span>
+  <span>勾选状态只存在你这台设备的浏览器里</span>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var KEY = "workshop-precheck-mac-v1";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('ul.checks input[type="checkbox"]'));
+  var fill = document.getElementById("fill");
+  var count = document.getElementById("count");
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function save(state) {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* 隐私模式下写不进去，忽略 */ }
+  }
+
+  function render() {
+    var done = 0;
+    boxes.forEach(function (b) {
+      b.closest("li").classList.toggle("done", b.checked);
+      if (b.checked) done++;
+    });
+    fill.style.width = (boxes.length ? Math.round((done / boxes.length) * 100) : 0) + "%";
+    count.textContent = done + " / " + boxes.length + " 项";
+  }
+
+  var state = load();
+  boxes.forEach(function (b) {
+    if (state[b.id]) b.checked = true;
+    b.addEventListener("change", function () {
+      state[b.id] = b.checked;
+      save(state);
+      render();
+    });
+  });
+  render();
+
+  document.getElementById("reset").addEventListener("click", function () {
+    boxes.forEach(function (b) { b.checked = false; });
+    state = {};
+    save(state);
+    render();
+  });
+
+  function select(block) {
+    var range = document.createRange();
+    range.selectNodeContents(block.querySelector("pre"));
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  document.querySelectorAll(".cmd").forEach(function (block) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copy";
+    btn.textContent = "复制";
+    btn.addEventListener("click", function () {
+      var text = block.querySelector("pre").textContent;
+      var done = function () {
+        btn.textContent = "已复制";
+        setTimeout(function () { btn.textContent = "复制"; }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { select(block); });
+      } else {
+        select(block);
+      }
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
