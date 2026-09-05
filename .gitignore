@@ -6,3 +6,6 @@
 
 # macOS
 .DS_Store
+
+# 上游仓库副本（含真实密钥，绝不能进版本库）
+docs/*.zip
