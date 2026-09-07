@@ -12,3 +12,10 @@ docs/*.zip
 
 # Lab 05-1 讲师配置（含真实订阅与资源标识）
 code/cloud/scripts/workshop-web.env
+
+# 微软官方 PPT 模版：不是本项目的内容，17MB，且不应由本仓库转发。
+# 需要时从 Microsoft 内部渠道获取，放回 docs/ 即可。
+docs/Microsoft Solutions Day PPT template.pptx
+
+# 教学 PPT 的中间版本（已被美化版 v2 取代）
+docs/AKS-MultiAgentIQ_教学PPT_MSSolutionsDay.pptx
