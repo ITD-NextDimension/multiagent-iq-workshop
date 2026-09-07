@@ -75,6 +75,24 @@ brew install azure-cli
 
 ---
 
+## 课上建仓库环境时，也不用下载
+
+安装脚本已经把全部 wheel 留了一份在 `~/frontier-workshop-precheck/wheels/`。
+课上按讲义建 `code/.venv` 时，用下面这条命令，同样不联网：
+
+```bash
+cd code
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install --no-index --find-links ~/frontier-workshop-precheck/wheels \
+  -r mcp/requirements.txt -r agents/requirements.txt
+```
+
+> 讲义里给的是不带 `--no-index` 的版本（面向没用离线包的同学）。
+> 你用了离线包，就加上这两个参数，省掉约 210MB 下载。
+
+---
+
 ## 出问题了怎么办
 
 **先重跑一次**，脚本是幂等的，已经装好的会自动跳过：

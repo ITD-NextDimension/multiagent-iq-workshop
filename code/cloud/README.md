@@ -104,8 +104,12 @@ cloud/
 
 ## Prerequisites
 
-- Azure CLI logged in (`az login`) with rights on `rg-multiagent-iq`, plus the
-  `containerapp` extension (`az extension add -n containerapp`).
+- Azure CLI logged in (`az login`) with rights on `rg-multiagent-iq`, plus two
+  extensions: `az extension add -n containerapp` and `az extension add -n communication`.
+  Both are dynamic extensions. `communication` is the one that bites: `deploy.sh`
+  reads the ACS connection string with `az communication list-key` at step 4/6, so a
+  missing extension fails the deploy *after* ACR, AKS and the container apps are
+  already provisioned. The precheck scripts install both.
 - `kubectl`.
 - `agents/.env` filled in with `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_MODEL`,
   and `AZURE_OPENAI_API_VERSION`. **No `AZURE_OPENAI_API_KEY` is required** —

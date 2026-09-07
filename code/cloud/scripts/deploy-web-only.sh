@@ -49,6 +49,18 @@ fi
 # shellcheck disable=SC1090
 set -a; source "$ENV_FILE"; set +a
 
+# 这个文件会发给全班，里面不该有任何凭据。发现就拒绝运行 —— 与其让 30 份
+# 密钥流出去，不如让讲师当场发现自己拷错了文件。
+LEAKED=""
+for v in AZURE_OPENAI_API_KEY AZURE_COMMUNICATION_SERVICE_CONNECTION_STRING \
+         AZURE_CLIENT_SECRET AZURE_OPENAI_KEY; do
+  [[ -z "${!v:-}" ]] || LEAKED="$LEAKED $v"
+done
+if [[ -n "$LEAKED" ]]; then
+  die "workshop-web.env 里含有不该分发的凭据：${LEAKED}" \
+      "这个文件会发给全班。删掉这些行再重跑 —— 本实验一个都用不到。"
+fi
+
 MISSING=""
 for v in AZURE_SUBSCRIPTION_ID AZURE_TENANT_ID AZURE_CLIENT_ID AZURE_RESOURCE_GROUP \
          ACA_ENV_NAME ACR_LOGIN_SERVER REGISTRY_IDENTITY_NAME AGENTS_BACKEND_URL; do

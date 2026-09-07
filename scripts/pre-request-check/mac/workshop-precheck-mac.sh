@@ -10,6 +10,8 @@
 #   bash workshop-precheck-mac.sh --yes        # 全自动，推荐
 #   bash workshop-precheck-mac.sh --check-only # 只体检，一个字节都不装
 #   bash workshop-precheck-mac.sh --skip-azure # 跳过 Lab 05 的 az / kubectl
+#   bash workshop-precheck-mac.sh --bundle-mode # 离线包自检：brew/az 缺失记为 WARN
+#                                               （这两项 macOS 上必须联网装，离线包装不了）
 #
 # 反复运行是安全的。
 # =============================================================================
@@ -17,12 +19,13 @@
 # 故意不用 set -e：要让每一项都跑完，一次看到全貌，而不是卡在第一个错误。
 set -uo pipefail
 
-AUTO_YES=0; CHECK_ONLY=0; SKIP_AZURE=0
+AUTO_YES=0; CHECK_ONLY=0; SKIP_AZURE=0; BUNDLE_MODE=0
 for arg in "$@"; do
   case "$arg" in
     --yes|-y)     AUTO_YES=1 ;;
     --check-only) CHECK_ONLY=1 ;;
     --skip-azure) SKIP_AZURE=1 ;;
+    --bundle-mode) BUNDLE_MODE=1 ;;
     --help|-h)    sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "未知参数: ${arg}（试试 --help）" >&2; exit 1 ;;
   esac
@@ -109,15 +112,38 @@ case "$(uname -s)" in
   *) echo "  ${R}✘${N} 未知平台 $(uname -s)"; exit 1 ;;
 esac
 case "$OS" in
-  macos) pass "macOS $(sw_vers -productVersion 2>/dev/null)" ;;
+  macos)
+    MACVER="$(sw_vers -productVersion 2>/dev/null)"
+    # 离线包里的 Python 是 macos11 版，wheel 也是 macosx_11_0 —— 10.x 装不上。
+    if [[ "${MACVER%%.*}" =~ ^[0-9]+$ ]] && (( ${MACVER%%.*} < 11 )); then
+      fail "macOS $MACVER 过低（离线包要求 11 以上）" "升级系统，或改用联网安装路线"
+    else
+      pass "macOS $MACVER"
+    fi ;;
   wsl)   pass "WSL2（$( . /etc/os-release 2>/dev/null; echo "${PRETTY_NAME:-Linux}" )）" ;;
   linux) pass "Linux（$( . /etc/os-release 2>/dev/null; echo "${PRETTY_NAME:-unknown}" )）" ;;
 esac
+
+# 磁盘：离线包解压 + VS Code + Python + venv 合计约 1.5GB，留些余量按 5GB 判。
+# 空间不足的表现是解压到一半报错，学员很难判断根因，所以提前挡。
+FREE_GB="$(df -g "$HOME" 2>/dev/null | awk 'NR==2{print $4}')"
+if [[ -n "$FREE_GB" ]]; then
+  if (( FREE_GB < 5 )); then
+    fail "可用磁盘空间仅 ${FREE_GB}GB（至少需要 5GB）" "清理磁盘后重跑"
+  else
+    pass "磁盘可用 ${FREE_GB}GB"
+  fi
+fi
 
 PKG=""
 if [[ "$OS" == "macos" ]]; then
   if have brew; then
     PKG="brew"; pass "Homebrew $(brew --version 2>/dev/null | head -1 | awk '{print $2}')"
+  elif [[ $BUNDLE_MODE -eq 1 ]]; then
+    # 离线包装不了 Homebrew，包内 README 也写明了要联网装。记 WARN 而非 FAIL，
+    # 否则每个 mac 学员都会拿到 NOT-READY —— 而 README 承诺的样例回执是 FAIL=0。
+    warn "未安装 Homebrew（Lab 05 装 az 时才需要，可课前自行安装）"
+    echo "     ${D}/bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/brew/HEAD/install.sh)\"${N}"
   else
     fail "未安装 Homebrew（macOS 上装东西都靠它）" \
          '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/brew/HEAD/install.sh)"'
@@ -135,14 +161,25 @@ step "网络连通性"
 if ! have curl; then
   fail "curl 未安装" "$( [[ "$PKG" == apt ]] && echo 'sudo apt-get install -y curl' || echo 'brew install curl' )"
 fi
+# 探测点按"课上真正会连的域"选，不只是能 ping 通的三个。
+# 判定看 HTTP 状态码而不是 curl 退出码：不带 -f 时，公司代理返回 403/407
+# 也会让 curl 退 0，于是"网络正常"，而这恰恰是最常见的 NOT-READY 原因。
+# 401/403 对这些端点属于"通了但要鉴权"，算连通；000 才是真的不通。
 for pair in "github.com|https://github.com" \
             "pypi.org|https://pypi.org/simple/mcp/" \
-            "Azure|https://management.azure.com/"; do
+            "Azure 管理面|https://management.azure.com/" \
+            "Entra 登录|https://login.microsoftonline.com/" \
+            "VS Code 扩展市场|https://marketplace.visualstudio.com/" \
+            "GitHub Copilot|https://api.githubcopilot.com/" \
+            "微软容器仓库|https://mcr.microsoft.com/v2/"; do
   nm="${pair%%|*}"; url="${pair##*|}"
-  if curl -sS --max-time 10 -o /dev/null "$url" >/dev/null 2>&1; then
-    pass "可访问 ${nm}"
-  else
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "$url" 2>/dev/null || echo 000)"
+  if [[ "$code" == "000" ]]; then
     fail "无法访问 ${nm}（${url}）" "换个网络重试；公司网络请检查代理 / VPN，curl 需要能走 HTTPS"
+  elif [[ "$code" == "407" ]] || [[ "$code" == "511" ]]; then
+    fail "${nm} 被代理拦截（HTTP ${code}）" "这是公司网络策略，课前找 IT 放行或换网络"
+  else
+    pass "可访问 ${nm} ${D}(HTTP ${code})${N}"
   fi
 done
 
@@ -288,6 +325,10 @@ if [[ $SKIP_AZURE -eq 1 ]]; then
 else
   if have az; then
     pass "az $(az version --output tsv --query '"azure-cli"' 2>/dev/null || echo '')"
+  elif [[ $BUNDLE_MODE -eq 1 ]]; then
+    # 同上：macOS 只有 Homebrew 渠道，离线包无法预装，这是文档里写明的已知项。
+    warn "未安装 Azure CLI（只有 Lab 05 用到，需联网装一次）"
+    echo "     ${D}brew install azure-cli${N}"
   else
     L_AZ="未安装 Azure CLI"
     fail "$L_AZ" \
@@ -299,19 +340,24 @@ else
     fi
   fi
 
-  # Lab 05 的 deploy.sh 会调 az containerapp。它是动态扩展：不预装的话，
+  # Lab 05 的 deploy.sh 会调这两个 az 扩展。它们是动态扩展：不预装的话，
   # 学员第一次跑部署脚本会撞上"是否安装扩展"的交互提示，正好卡在最后 30 分钟。
+  #   containerapp —— 会话池与容器应用
+  #   communication —— deploy.sh 用 `az communication list-key` 取 ACS 连接串，
+  #                    取不到就 exit 1，而且是在 ACR/AKS/ACA 都建好之后才失败。
   if have az; then
-    if az extension show --name containerapp >/dev/null 2>&1; then
-      pass "az 扩展 containerapp"
-    else
-      L_CAE="缺少 az 扩展 containerapp（Lab 05 部署脚本要用）"
-      fail "$L_CAE" "az extension add --name containerapp"
-      if confirm "az extension add --name containerapp？"; then
-        az extension add --name containerapp --only-show-errors >/dev/null 2>&1 \
-          && fixed "$L_CAE" "az 扩展 containerapp 已安装"
+    for _ext in containerapp communication; do
+      if az extension show --name "$_ext" >/dev/null 2>&1; then
+        pass "az 扩展 $_ext"
+      else
+        L_EXT="缺少 az 扩展 ${_ext}（Lab 05 部署脚本要用）"
+        fail "$L_EXT" "az extension add --name $_ext"
+        if confirm "az extension add --name ${_ext}？"; then
+          az extension add --name "$_ext" --only-show-errors >/dev/null 2>&1 \
+            && fixed "$L_EXT" "az 扩展 $_ext 已安装"
+        fi
       fi
-    fi
+    done
   fi
 
   if have kubectl; then

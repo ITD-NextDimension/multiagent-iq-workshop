@@ -45,17 +45,26 @@ else
 fi
 
 # ---- Python 版本 ------------------------------------------------------------
-step "Python 版本"
+# 只认 3.12：包里 63 个 wheel 有 13 个是 cp312 专用，3.10/3.11 装不上。
+# 最常见的受害者是 WSL 里已经装了 Ubuntu 22.04（自带 python3.10）的学员 ——
+# 放行 3.10 只会让他在下一步撞上一句无从下手的"依赖安装失败"。
+step "Python 3.12"
 PY=""
 py_ok() { local v; v="$("$1" -c 'import sys;print("%d.%d"%sys.version_info[:2])' 2>/dev/null)" || return 1
-          [[ "$v" == "3.10" || "$v" == "3.11" || "$v" == "3.12" ]]; }
-for c in python3.12 python3.11 python3.10 python3; do
+          [[ "$v" == "3.12" ]]; }
+for c in python3.12 python3; do
   if have "$c" && py_ok "$c"; then PY="$(command -v "$c")"; break; fi
 done
 if [[ -n "$PY" ]]; then
   ok "$("$PY" -V 2>&1)"
 else
-  err "没有 3.10–3.12 的 Python（Ubuntu 24.04 自带 3.12，正常不该走到这里）"
+  CUR="$(python3 -V 2>&1 || echo '无 python3')"
+  err "需要 Python 3.12，当前是 ${CUR}"
+  echo "     ${D}这个离线包的依赖只支持 3.12。你的 WSL 大概率是 Ubuntu 22.04。${N}"
+  echo "     ${D}查看：wsl -l -v （在 Windows 侧执行）${N}"
+  echo "     ${D}方案一（推荐）：装 Ubuntu 24.04 —— wsl --install -d Ubuntu-24.04${N}"
+  echo "     ${D}方案二：sudo add-apt-repository ppa:deadsnakes/ppa \\${N}"
+  echo "     ${D}          && sudo apt-get install -y python3.12 python3.12-venv${N}"
 fi
 
 # ---- 课程依赖（本地 wheels，不联网）----------------------------------------
@@ -87,6 +96,17 @@ else
   fi
 fi
 
+# 把 wheel 留一份到工作目录：课上在仓库里另建 code/.venv 时可以照样离线装。
+# --no-index 安装不写 pip 的 HTTP 缓存，不留这份的话课上仍要下约 210MB。
+if [[ -d "$HERE/wheels" ]]; then
+  mkdir -p "$WORKDIR/wheels"
+  cp -n "$HERE/wheels"/*.whl "$WORKDIR/wheels/" 2>/dev/null || true
+  _req="$HERE/../requirements.txt"
+  [[ -f "$_req" ]] || _req="$HERE/requirements.txt"
+  [[ -f "$_req" ]] && cp -n "$_req" "$WORKDIR/requirements.txt" 2>/dev/null || true
+  ok "wheel 已留存到 $WORKDIR/wheels（课上离线装用）"
+fi
+
 # ---- kubectl ----------------------------------------------------------------
 step "Lab 05 工具"
 if have kubectl; then
@@ -114,16 +134,20 @@ else
   echo "     ${D}curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash${N}"
 fi
 
-# containerapp 是动态扩展，deploy.sh / teardown.sh 都要用。它很小，联网装即可。
+# containerapp / communication 都是动态扩展，deploy.sh 与 teardown.sh 要用。
+# 它们很小，联网装即可。communication 特别重要：deploy.sh 用它取 ACS 连接串，
+# 失败点在 ACR/AKS/ACA 都建好之后，学员会在最后 30 分钟眼看着部署崩掉。
 if have az; then
-  if az extension show --name containerapp >/dev/null 2>&1; then
-    ok "az 扩展 containerapp"
-  elif az extension add --name containerapp --only-show-errors >/dev/null 2>&1; then
-    ok "az 扩展 containerapp 已安装"
-  else
-    warn "az 扩展 containerapp 未装（Lab 05 部署要用）"
-    echo "     ${D}az extension add --name containerapp${N}"
-  fi
+  for ext in containerapp communication; do
+    if az extension show --name "$ext" >/dev/null 2>&1; then
+      ok "az 扩展 $ext"
+    elif az extension add --name "$ext" --only-show-errors >/dev/null 2>&1; then
+      ok "az 扩展 $ext 已安装"
+    else
+      warn "az 扩展 $ext 未装（Lab 05 部署要用）"
+      echo "     ${D}az extension add --name ${ext}${N}"
+    fi
+  done
 fi
 
 # ---- 回执 -------------------------------------------------------------------

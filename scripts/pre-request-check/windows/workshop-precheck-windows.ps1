@@ -77,7 +77,32 @@ if ($env:OS -ne "Windows_NT") {
     exit 1
 }
 $os = Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue
-if ($os) { Add-Pass "$($os.Caption)（$($os.Version)）" } else { Add-Pass "Windows" }
+if ($os) {
+    Add-Pass "$($os.Caption)（$($os.Version)）"
+    # WSL2 需要 Windows 10 build 19041 以上。低于这个号，wsl --install 会失败，
+    # 而报错信息完全看不出是系统版本问题。
+    $build = 0
+    if ($os.BuildNumber -and [int]::TryParse($os.BuildNumber, [ref]$build)) {
+        if ($build -lt 19041) {
+            Add-Fail "Windows build $build 过低（WSL2 需要 19041 以上）" "运行 Windows Update 升级系统后重跑"
+        }
+    }
+} else { Add-Pass "Windows" }
+
+# 虚拟化：BIOS 里关掉的话 wsl --install 必然失败，这在公司统一装机的笔记本上很常见。
+$cs = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
+if ($cs -and ($cs.PSObject.Properties.Name -contains 'HypervisorPresent')) {
+    if ($cs.HypervisorPresent) { Add-Pass "虚拟化已启用" }
+    else { Add-Fail "虚拟化未启用（WSL2 装不上）" "重启进 BIOS/UEFI，开启 Intel VT-x 或 AMD-V" }
+}
+
+# 磁盘：WSL2 发行版 + 离线包 + venv 合计约 2GB，留余量按 10GB 判（WSL 虚拟磁盘会长）。
+try {
+    $sysDrive = (Get-Item $env:SystemDrive).PSDrive
+    $freeGB = [math]::Floor($sysDrive.Free / 1GB)
+    if ($freeGB -lt 10) { Add-Fail "系统盘可用空间仅 ${freeGB}GB（至少需要 10GB）" "清理磁盘后重跑" }
+    else { Add-Pass "系统盘可用 ${freeGB}GB" }
+} catch { }
 if (Test-Admin) { Add-Pass "以管理员身份运行" }
 else { Add-Warn "非管理员运行 —— 安装 WSL 时需要管理员权限，届时请用管理员 PowerShell 重跑" }
 
@@ -139,7 +164,16 @@ if (-not (Get-Command wsl -ErrorAction SilentlyContinue)) {
     $distros = @(wsl -l -q 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     try { [Console]::OutputEncoding = $prev } catch { }
 
-    if ($distros -contains $Distro) { Add-Pass "已安装发行版 $Distro"; $wslReady = $true }
+    # 商店装的 Ubuntu 名字带版本号（Ubuntu-24.04 / Ubuntu-22.04）。只按精确名匹配
+    # 会把这些学员判成"未安装"，进而装出第二个发行版并要求再重启一次。
+    $match = $distros | Where-Object { $_ -eq $Distro }
+    if (-not $match) { $match = $distros | Where-Object { $_ -like "$Distro*" } | Sort-Object -Descending }
+    if ($match) {
+        $Distro = @($match)[0]
+        Add-Pass "已安装发行版 $Distro"
+        if ($distros.Count -gt 1) { Write-Host "         (检测到多个发行版：$($distros -join ', '))" -ForegroundColor DarkGray }
+        $wslReady = $true
+    }
     else {
         Add-Fail "未安装发行版 $Distro" "以管理员身份执行：wsl --install -d $Distro"
         if ((Test-Admin) -and (Confirm-Action "现在安装 WSL + $Distro（可能需要重启）?")) {
@@ -208,14 +242,24 @@ command -v git >/dev/null 2>&1 && ok "git $(git --version | awk '{print $3}')" \
   || bad "git 未安装" "sudo apt-get install -y git"
 
 echo "== 网络连通性 =="
+# 判定看 HTTP 状态码而不是 curl 退出码：不带 -f 时公司代理返回 403/407 也会
+# 让 curl 退 0，于是误报"网络正常"——而这正是最常见的 NOT-READY 原因。
+# 401/403/404 对这些端点属于"通了但要鉴权/无此路径"，算连通；000 才是真不通。
 for pair in "github.com|https://github.com" \
             "pypi.org|https://pypi.org/simple/mcp/" \
-            "Azure|https://management.azure.com/"; do
+            "Azure 管理面|https://management.azure.com/" \
+            "Entra 登录|https://login.microsoftonline.com/" \
+            "VS Code 扩展市场|https://marketplace.visualstudio.com/" \
+            "GitHub Copilot|https://api.githubcopilot.com/" \
+            "微软容器仓库|https://mcr.microsoft.com/v2/"; do
   nm="${pair%%|*}"; url="${pair##*|}"
-  if curl -sS --max-time 10 -o /dev/null "$url" >/dev/null 2>&1; then
-    ok "可访问 $nm"
-  else
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "$url" 2>/dev/null || echo 000)"
+  if [ "$code" = "000" ]; then
     bad "无法访问 $nm（$url）" "换个网络重试；公司网络请检查代理 / VPN"
+  elif [ "$code" = "407" ] || [ "$code" = "511" ]; then
+    bad "$nm 被代理拦截（HTTP $code）" "这是公司网络策略，课前找 IT 放行或换网络"
+  else
+    ok "可访问 $nm (HTTP $code)"
   fi
 done
 
@@ -261,15 +305,19 @@ if [ "$SKIP_AZURE" != "1" ]; then
   command -v az >/dev/null 2>&1 && ok "az $(az version --output tsv --query '"azure-cli"' 2>/dev/null)" \
     || bad "Azure CLI 未安装" "curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash"
 
-  # Lab 05 的 deploy.sh 会调 az containerapp。它是动态扩展：不预装的话，
+  # Lab 05 的 deploy.sh 会调这两个 az 扩展。它们是动态扩展：不预装的话，
   # 学员第一次跑部署脚本会撞上"是否安装扩展"的交互提示，正好卡在最后 30 分钟。
+  # communication 尤其要紧：deploy.sh 用它取 ACS 连接串，失败点在 ACR/AKS/ACA
+  # 都建好之后，学员会眼看着最后一步崩掉。
   if command -v az >/dev/null 2>&1; then
-    if ! az extension show --name containerapp >/dev/null 2>&1; then
-      ask "安装 az 扩展 containerapp（Lab 05 部署脚本要用）" \
-        && az extension add --name containerapp --only-show-errors >/dev/null 2>&1
-    fi
-    az extension show --name containerapp >/dev/null 2>&1 && ok "az 扩展 containerapp" \
-      || bad "缺少 az 扩展 containerapp" "az extension add --name containerapp"
+    for ext in containerapp communication; do
+      if ! az extension show --name "$ext" >/dev/null 2>&1; then
+        ask "安装 az 扩展 ${ext}（Lab 05 部署脚本要用）" \
+          && az extension add --name "$ext" --only-show-errors >/dev/null 2>&1
+      fi
+      az extension show --name "$ext" >/dev/null 2>&1 && ok "az 扩展 $ext" \
+        || bad "缺少 az 扩展 $ext" "az extension add --name $ext"
+    done
   fi
 
   if ! command -v kubectl >/dev/null 2>&1; then

@@ -34,6 +34,27 @@ echo "==> Resource group : $RG ($LOCATION)"
 echo "==> ACR            : $ACR_NAME"
 echo "==> AKS            : $AKS_NAME"
 
+# Every `az deployment group create` below needs the resource group to exist
+# already; nothing in this repo used to create it, so a first run in a fresh
+# subscription failed on step 1 with "ResourceGroupNotFound".
+if ! az group show --name "$RG" --only-show-errors >/dev/null 2>&1; then
+  echo "==> [0/6] Creating resource group $RG"
+  az group create --name "$RG" --location "$LOCATION" --only-show-errors >/dev/null
+fi
+
+# RG, AKS and ACR names are constants here (ACR is derived from the subscription
+# id), so a whole classroom deploying into one subscription would target the same
+# cluster and registry and overwrite each other. deploy.sh is documented as
+# re-runnable, so this warns rather than blocks — but it names the override.
+if az aks show -g "$RG" -n "$AKS_NAME" --only-show-errors >/dev/null 2>&1; then
+  echo "!!  AKS '$AKS_NAME' already exists in '$RG'."
+  echo "!!  Re-running is fine if this deployment is yours; it will be updated in place."
+  echo "!!  If someone else in this subscription created it, YOUR RUN WILL OVERWRITE THEIRS."
+  echo "!!  Use your own names:  RG=rg-<you> PREFIX=<you> AKS_NAME=aks-<you> bash scripts/deploy.sh"
+  echo "!!  Or run Lab 05-1, which shares one instructor-owned deployment by design."
+  echo
+fi
+
 # 1) Create the ACR first so we can build/push images into it.
 echo "==> [1/6] Creating Azure Container Registry"
 az deployment group create -g "$RG" -n opciq-acr \

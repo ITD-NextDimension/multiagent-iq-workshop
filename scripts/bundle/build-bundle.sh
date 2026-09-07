@@ -68,8 +68,16 @@ have() { command -v "$1" >/dev/null 2>&1; }
 # curl 的 -f 让 4xx/5xx 直接失败，避免把错误页当成安装包发给学员。
 fetch() {
   local url="$1" dest="$2" label="${3:-$(basename "$dest")}" min="${4:-10000}"
-  if [[ -s "$dest" ]] && [[ "$(wc -c <"$dest")" -ge "$min" ]]; then
+  local stamp="${dest}.src"
+  # 只看"文件在不在"会漏掉版本升级：kubectl 和 azure-cli.deb 的目标文件名不带版本，
+  # 改了 KUBECTL_VER / AZ_DEB_DIST 后旧文件仍在，于是永远下不到新版。
+  # 这里额外比对来源 URL，URL 变了就重下。
+  if [[ -s "$dest" ]] && [[ "$(wc -c <"$dest")" -ge "$min" ]] \
+     && [[ -f "$stamp" ]] && [[ "$(cat "$stamp")" == "$url" ]]; then
     ok "$label ${D}(已存在，跳过)${N}"; return 0
+  fi
+  if [[ -s "$dest" ]] && [[ ! -f "$stamp" || "$(cat "$stamp" 2>/dev/null)" != "$url" ]]; then
+    [[ -f "$stamp" ]] && warn "$label 来源已变化，重新下载"
   fi
   mkdir -p "$(dirname "$dest")"
   if curl -fSL --compressed --retry 3 --retry-delay 2 --max-time 900 \
@@ -79,6 +87,7 @@ fetch() {
       rm -f "$dest.part"; err "$label 下载内容过小（${sz}B），可能是错误页"; return 1
     fi
     mv "$dest.part" "$dest"
+    printf '%s' "$url" > "$stamp"
     ok "$label ${D}($(du -h "$dest" | cut -f1))${N}"
   else
     rm -f "$dest.part"; err "$label 下载失败：$url"; return 1
@@ -98,14 +107,25 @@ fetch_vsix() {
 # 没有它 pip 会去下源码包，学员机器上就得现场编译。
 fetch_wheels() {
   local platform_tag="$1" dest="$2" label="$3"
-  if [[ -d "$dest" ]] && [[ "$(ls -1 "$dest" 2>/dev/null | wc -l)" -ge 60 ]]; then
-    ok "$label ${D}($(ls -1 "$dest" | wc -l | tr -d ' ') 个 wheel，已存在)${N}"; return 0
+  # 只数文件个数会漏掉 requirements.txt 的改动：改了 pin 之后 wheel 不会重新解析，
+  # 但新的 requirements.txt 照样会被拷进包里 —— 学员侧 --no-index 必然失败。
+  # 这里用 requirements.txt 的哈希做戳，内容变了就整目录重来。
+  local reqhash stamp="$dest/.requirements.sha256"
+  reqhash="$(shasum -a 256 "$REQUIREMENTS" 2>/dev/null | cut -d" " -f1)"
+  if [[ -d "$dest" ]] && [[ "$(ls -1 "$dest" 2>/dev/null | grep -c '\.whl$')" -ge 60 ]] \
+     && [[ -f "$stamp" ]] && [[ "$(cat "$stamp")" == "$reqhash" ]]; then
+    ok "$label ${D}($(ls -1 "$dest" | grep -c '\.whl$' | tr -d ' ') 个 wheel，已存在)${N}"; return 0
+  fi
+  if [[ -d "$dest" ]] && [[ -f "$stamp" ]] && [[ "$(cat "$stamp")" != "$reqhash" ]]; then
+    warn "requirements.txt 已变化，重新解析 $label"
+    rm -rf "$dest"
   fi
   mkdir -p "$dest"
   if "$PIP" download -q --only-binary=:all: \
         --platform "$platform_tag" --python-version 3.12 --implementation cp \
         --dest "$dest" -r "$REQUIREMENTS" 2>/tmp/wheelerr.$$; then
-    ok "$label ${D}($(ls -1 "$dest" | wc -l | tr -d ' ') 个 wheel, $(du -sh "$dest" | cut -f1))${N}"
+    printf '%s' "$reqhash" > "$stamp"
+    ok "$label ${D}($(ls -1 "$dest" | grep -c '\.whl$' | tr -d ' ') 个 wheel, $(du -sh "$dest" | cut -f1))${N}"
   else
     err "$label 下载失败"; sed 's/^/      /' /tmp/wheelerr.$$ | tail -5
   fi

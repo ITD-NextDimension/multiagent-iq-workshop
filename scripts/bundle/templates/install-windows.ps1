@@ -109,7 +109,19 @@ if (-not (Get-Command wsl -ErrorAction SilentlyContinue)) {
     $distros = @(wsl -l -q 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     try { [Console]::OutputEncoding = $prev } catch { }
 
-    if ($distros -contains $Distro) { Ok "已安装 $Distro"; $wslReady = $true }
+    # 从商店装的 Ubuntu 名字带版本号（Ubuntu-24.04 / Ubuntu-22.04）。
+    # 只按精确名 "Ubuntu" 匹配的话，这些学员会被判定为"未安装"，然后又装出
+    # 第二个发行版、再重启一次 —— 而且现象和"忘了重启"完全一样，会一直循环。
+    $match = $distros | Where-Object { $_ -eq $Distro }
+    if (-not $match) {
+        $match = $distros | Where-Object { $_ -like "$Distro*" } | Sort-Object -Descending
+    }
+    if ($match) {
+        $Distro = @($match)[0]
+        Ok "已安装 $Distro"
+        if ($distros.Count -gt 1) { Write-Host "         (检测到多个发行版：$($distros -join ', '))" -ForegroundColor DarkGray }
+        $wslReady = $true
+    }
     elseif ($DryRun) { Write-Host "  [dry-run] wsl --install -d $Distro" -ForegroundColor DarkGray }
     elseif (Test-Admin) {
         # WSL 本身必须联网装（微软不提供可离线分发的发行版包）。
@@ -132,18 +144,49 @@ if (-not $wslReady) {
 } else {
     # 把整个 wsl\ 目录经 /mnt/c 复制进 WSL 家目录再装：直接在 /mnt 下跑 pip
     # 会因为 Windows 文件系统不支持 Linux 权限位而出各种怪问题。
-    $wslSrc = (wsl wslpath -a ("'" + (Join-Path $Here "wsl") + "'") 2>$null)
-    if (-not $wslSrc) { $wslSrc = (wsl wslpath -a "$Here/wsl" 2>$null) }
+    $wslSrc = (wsl -d $Distro wslpath -a ("'" + (Join-Path $Here "wsl") + "'") 2>$null)
+    if (-not $wslSrc) { $wslSrc = (wsl -d $Distro wslpath -a "$Here/wsl" 2>$null) }
     if ($wslSrc) {
         Write-Host "  正在把离线文件复制进 WSL（约 300MB，请稍候）..." -ForegroundColor DarkGray
-        wsl bash -lc "rm -rf ~/workshop-offline && mkdir -p ~/workshop-offline && cp -r '$wslSrc'/. ~/workshop-offline/ && chmod +x ~/workshop-offline/install-in-wsl.sh"
+        wsl -d $Distro bash -lc "rm -rf ~/workshop-offline && mkdir -p ~/workshop-offline && cp -r '$wslSrc'/. ~/workshop-offline/ && chmod +x ~/workshop-offline/install-in-wsl.sh"
         if ($LASTEXITCODE -eq 0) {
             Ok "文件已复制进 WSL"
             Write-Host ""
-            wsl bash -lc "bash ~/workshop-offline/install-in-wsl.sh"
+            wsl -d $Distro bash -lc "bash ~/workshop-offline/install-in-wsl.sh"
             if ($LASTEXITCODE -ne 0) { Bad "WSL 侧安装未全部成功（看上面的输出）" }
         } else { Bad "复制到 WSL 失败" }
     } else { Bad "无法解析 WSL 路径" }
+}
+
+# ---- VS Code 扩展：workspace 类必须再装进 WSL 一次 --------------------------
+# Copilot / Copilot Chat / Python 的 package.json 没有声明 extensionKind，
+# VS Code 因此把它们当 workspace 类，装进 WSL 端而不是 Windows 端。
+# 上面那轮 --install-extension 只作用于 Windows 侧，学员连进 WSL 后这三个都不在，
+# 会当场从 marketplace 下载约 58MB —— 正是这个离线包要避免的事。
+# remote-wsl 是 ui 类，只需留在 Windows 侧，不在这里重装。
+Write-Step "VS Code 扩展（WSL 侧）"
+if (-not $wslReady) {
+    Warn "跳过（WSL 尚未就绪）"
+} elseif (-not $codeCli) {
+    Bad "没有 code 命令，无法装 WSL 侧扩展" "连进 WSL 后手动 Ctrl+Shift+P → Install from VSIX"
+} elseif ($DryRun) {
+    Write-Host "  [dry-run] code --remote wsl+$Distro --install-extension <3 个 vsix>" -ForegroundColor DarkGray
+} else {
+    $remote = "wsl+$Distro"
+    $wslInstalled = @()
+    try { $wslInstalled = & $codeCli --remote $remote --list-extensions 2>$null | ForEach-Object { $_.ToLower() } } catch { }
+    $needed = @('github.copilot','github.copilot-chat','ms-python.python')
+    foreach ($id in $needed) {
+        $vsix = Join-Path $Here "vsix\$id.vsix"
+        if ($wslInstalled -contains $id.ToLower()) { Ok "$id (WSL 已装)"; continue }
+        if (-not (Test-Path $vsix)) { Warn "$id 的 vsix 不在包里，跳过"; continue }
+        & $codeCli --remote $remote --install-extension $vsix --force 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) { Ok "$id → WSL" }
+        else {
+            Warn "$id 装进 WSL 失败（可能是 WSL 里还没启动过 VS Code Server）"
+            Write-Host "         第一次连进 WSL 后重跑本脚本即可，或手动 Ctrl+Shift+P → Install from VSIX" -ForegroundColor DarkGray
+        }
+    }
 }
 
 # ---- 汇总 -------------------------------------------------------------------

@@ -95,11 +95,15 @@ if [[ -x "$CODE_CLI" ]] && ! have code; then
 fi
 
 # ---- Python -----------------------------------------------------------------
-step "Python 3.10–3.12"
+# 只认 3.12：包里的 wheel 是用 --python-version 3.12 --implementation cp 解出来的，
+# 63 个里有 13 个是 cp312 专用（numpy / matplotlib / pillow / pydantic-core ...）。
+# 放行 3.10 或 3.11 的话，这里会跳过安装包内的 3.12，然后 --no-index 必然失败，
+# 而且报错只说"依赖安装失败"，学员完全看不出根因是 Python 版本。
+step "Python 3.12"
 PY=""
 py_ok() { local v; v="$("$1" -c 'import sys;print("%d.%d"%sys.version_info[:2])' 2>/dev/null)" || return 1
-          [[ "$v" == "3.10" || "$v" == "3.11" || "$v" == "3.12" ]]; }
-for c in python3.12 python3.11 python3.10 python3; do
+          [[ "$v" == "3.12" ]]; }
+for c in python3.12 python3; do
   if have "$c" && py_ok "$c"; then PY="$(command -v "$c")"; break; fi
 done
 if [[ -n "$PY" ]]; then
@@ -109,7 +113,7 @@ else
   if [[ -f "$PKG" ]]; then
     echo "  ${D}需要管理员密码来安装 Python${N}"
     run sudo installer -pkg "$PKG" -target / && ok "Python 已安装" || err "Python 安装失败"
-    for c in python3.12 python3.11 python3.10 python3; do
+    for c in python3.12 python3; do
       have "$c" && py_ok "$c" && { PY="$(command -v "$c")"; break; }
     done
     [[ -z "$PY" && $DRY -eq 0 ]] && err "装完仍找不到可用的 Python"
@@ -144,6 +148,16 @@ else
   fi
 fi
 
+# 把 wheel 留一份到工作目录：课上在仓库里另建 code/.venv 时，可以照样离线装。
+# 离线安装（--no-index）不会写 pip 的 HTTP 缓存，所以不留这一份的话，
+# 课上那次 pip install 仍要从 PyPI 下约 210MB —— 与"基本不需要下载"矛盾。
+if [[ -d "$WHEEL_DIR" ]]; then
+  mkdir -p "$WORKDIR/wheels"
+  cp -n "$WHEEL_DIR"/*.whl "$WORKDIR/wheels/" 2>/dev/null || true
+  cp -n "$HERE/requirements.txt" "$WORKDIR/" 2>/dev/null || true
+  ok "wheel 已留存到 $WORKDIR/wheels（课上离线装用）"
+fi
+
 # ---- VS Code 扩展（本地 .vsix）----------------------------------------------
 step "VS Code 扩展（本地安装）"
 if [[ -x "$CODE_CLI" ]] || have code; then
@@ -171,6 +185,9 @@ if have kubectl; then
   ok "kubectl 已安装"
 elif [[ -f "$KUBECTL_BIN" ]]; then
   echo "  ${D}需要管理员密码来安装 kubectl 到 /usr/local/bin${N}"
+  # BSD 的 install 不会自动建目录，而没装过 Homebrew 的 Apple Silicon 机器上
+  # /usr/local/bin 默认不存在。
+  run sudo mkdir -p /usr/local/bin
   run sudo install -m 0755 "$KUBECTL_BIN" /usr/local/bin/kubectl && ok "kubectl 已安装" || err "kubectl 安装失败"
 else
   err "包里缺少 kubectl"
@@ -197,7 +214,10 @@ fi
 step "环境自检"
 if [[ -x "$HERE/verify.sh" ]]; then
   echo "  ${D}跑一遍自检脚本确认结果 ...${N}"; echo
-  bash "$HERE/verify.sh" --check-only
+  # --bundle-mode：把 Homebrew / Azure CLI 的缺失记为 WARN 而不是 FAIL。
+  # 这两项 macOS 上只有 Homebrew 渠道，离线包装不了，本包 README 也写明了。
+  # 不加这个 flag 的话，照做的学员必然拿到 NOT-READY —— 而 README 给的样例回执是 FAIL=0。
+  bash "$HERE/verify.sh" --check-only --bundle-mode
   exit $?
 else
   warn "包里没有 verify.sh，跳过自检"
