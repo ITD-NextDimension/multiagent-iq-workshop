@@ -113,8 +113,10 @@ check_shared() {  # $1=类型描述  $2=az 命令...
     die "共享资源不可用：$label" "不要改脚本，直接联系讲师恢复共享服务。"
   fi
 }
+# 不依赖可选的 `containerapp` CLI 扩展；预检只需确认 ARM 资源可访问。
 check_shared "Container Apps 环境 $ACA_ENV_NAME" \
-  az containerapp env show -g "$AZURE_RESOURCE_GROUP" -n "$ACA_ENV_NAME"
+  az resource show -g "$AZURE_RESOURCE_GROUP" \
+    --resource-type Microsoft.App/managedEnvironments -n "$ACA_ENV_NAME"
 check_shared "拉取身份 $REGISTRY_IDENTITY_NAME" \
   az identity show -g "$AZURE_RESOURCE_GROUP" -n "$REGISTRY_IDENTITY_NAME"
 

@@ -212,6 +212,7 @@ ACC-001 这个账户在给哪些项目付钱？
 | 缺少 `ACA_ENV_NAME`、`ACR_LOGIN_SERVER` 等 | 使用了模板文件，或正式配置未填写 | 向讲师索取完整的 `workshop-web.env`；不要从本地 `agents/.env` 拼凑。 |
 | 应用名不合规或名称已存在 | 名称格式不符合约束，或与其他学员重复 | 使用新的唯一小写名称，例如 `姓名缩写-web`。 |
 | 共享资源预检失败 | ACA 环境、托管身份或共享 API 出现问题 | 不要修改脚本或删除资源，联系讲师恢复共享资源。 |
+| `az containerapp` 提示安装扩展，但安装报 `No module named pip` | Azure CLI 使用的系统 Python 没有 `pip`，可选 `containerapp` 扩展无法安装 | 本脚本的 ACA 预检无需此扩展；管理员可执行 `sudo apt install -y python3-pip` 后运行 `az extension add --name containerapp --upgrade`。查询应用时可用 `az resource show --resource-type Microsoft.App/containerApps` 替代。 |
 | 首次打开页面很慢 | `minReplicas=0` 触发冷启动 | 等待几十秒，刷新同一 HTTPS 地址。 |
 
 ## 安全与清理
