@@ -44,7 +44,6 @@
       "settings": {
         // 必须指向 code/.venv —— .vscode/mcp.json 里写死了这个路径。
         "python.defaultInterpreterPath": "${containerWorkspaceFolder}/code/.venv/bin/python",
-        "python.terminal.activateEnvironment": true,
         "files.eol": "\n",
         "terminal.integrated.defaultProfile.linux": "bash"
       }
@@ -70,6 +69,10 @@
   //   onCreate   —— Codespaces 预构建(prebuild)会执行它并把结果打进镜像。
   //                 装 64 个包这种重活放这里，学员开 Codespace 时已经装好了。
   //   postCreate —— 每次创建 Codespace 都会跑，只做每人各自的轻量初始化。
+  // 默认 waitFor 是 updateContentCommand（我们没定义），VS Code 会在
+  // postCreate 还没跑完时就把工作区交给学员 —— 那一刻 .env 可能还不存在。
+  "waitFor": "postCreateCommand",
+
   "onCreateCommand": "bash .devcontainer/on-create.sh",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
 

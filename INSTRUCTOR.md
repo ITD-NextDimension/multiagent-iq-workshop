@@ -17,7 +17,10 @@
 | 场地网络差 | ❌ 直接不能用 | ✅ 离线包可用 |
 | 适合 | 网络可靠、学员电脑五花八门 | 网络不确定、或学员在内网 |
 
-> **两条路线的环境完全一致**（同一份 `.devcontainer/`），讲义命令一个字不用改。
+> **两条路线用同一份依赖清单**，讲义命令一个字不用改。
+> （注意：`requirements.txt` 只钉死了 12 个直接依赖，传递依赖是浮动的 ——
+> 预构建镜像会把它们冻在打包那一刻，本地路线则是当天现解析。
+> 「64 个包」这个检查点因此有漂移的可能，预构建日志里会告警。）
 > 建议：**主推 Codespaces，同时把离线包备在 U 盘里**。当天 Codespaces 打不开就切，
 > 切换成本只是学员多花时间装，讲义不用改。
 
@@ -229,6 +232,7 @@ scripts/publish-workshop.sh <git-url>
 | 我要… | 看这个 |
 |---|---|
 | 让学员准备环境 | [00-学员环境清单.md](scripts/pre-request-check/00-学员环境清单.md) |
+| 学员用 Codespaces 跑全程 | [docs/codespaces.md](docs/codespaces.md) |
 | 打离线包 | [scripts/bundle/README.md](scripts/bundle/README.md) |
 | 改 Codespaces / 容器环境 | [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json) |
 | 讲 Lab 01 | [docs/walkthrough/lab-01.md](docs/walkthrough/lab-01.md) |

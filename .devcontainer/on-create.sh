@@ -28,8 +28,14 @@ cd "$CODE_DIR"
 # ---- 1. 虚拟环境 ------------------------------------------------------------
 # 位置必须是 code/.venv：.vscode/mcp.json 里写死了
 # ${workspaceFolder}/code/.venv/bin/python，换地方 MCP 服务器就注册不上。
+# --clear 不能省。本地 Dev Containers 路线是把宿主机的目录挂进来的，
+# 那里可能已经有一个 macOS/Windows 建的 code/.venv：它的 bin/python 指向
+# /opt/homebrew/... 之类容器里不存在的路径，不加 --clear 会直接失败
+#   Error: [Errno 2] No such file or directory: '.../.venv/bin/python'
+# 而且 venv 本身不清 site-packages，会留下一堆 *-darwin.so，import 时才炸。
+# venv 完全可以从 requirements 重建，清掉没有任何损失。
 step "创建虚拟环境 code/.venv"
-python -m venv .venv
+python -m venv --clear .venv
 .venv/bin/python -m pip install --quiet --upgrade pip
 ok "$(.venv/bin/python --version)"
 
@@ -42,7 +48,9 @@ step "安装依赖（64 个包，预构建时只跑这一次）"
 
 # Lab 01 用包数量当检查点。这里先自查一遍：预构建阶段就能发现问题，
 # 总好过课上 30 个学员同时发现。
-COUNT="$(.venv/bin/python -m pip list --format=freeze | wc -l | tr -d ' ')"
+# 这是一个「检查」，不该有能力弄挂它检查的东西：pipefail 下 pip 的一次
+# 抖动会让整个 onCreate 在安装成功之后才失败。
+COUNT="$(.venv/bin/python -m pip list --format=freeze 2>/dev/null | wc -l | tr -d ' ')" || COUNT="?"
 if [[ "$COUNT" == "64" ]]; then
   ok "已安装 $COUNT 个包"
 else
@@ -52,7 +60,18 @@ fi
 # ---- 3. Azure CLI 扩展 ------------------------------------------------------
 # 只有 Lab 05 / 05-1 用得到。装不上不该让整个环境构建失败，
 # Lab 01-04 完全不受影响。
-step "安装 Azure CLI 扩展（Lab 05 用）"
+step "准备 Azure CLI（Lab 05 用）"
+
+# az 的版本值得报一下。devcontainer feature 正常会从微软的 apt 源装最新版；
+# 构建时网络不稳会让它退回 Debian 自带的老版本（bookworm 是 2.45.0），
+# 那个版本对 containerapp 扩展和新版 Bicep 都可能不够用。
+AZ_VER="$(az version --query '"azure-cli"' -o tsv 2>/dev/null || echo unknown)"
+case "$AZ_VER" in
+  unknown) warn "az 没装上 —— Lab 05 会用不了" ;;
+  2.[0-9].*|2.[0-4][0-9].*) warn "az 版本偏低（$AZ_VER）—— 像是退回了发行版自带的包，构建时网络可能中断过；Lab 05 前请复核" ;;
+  *) ok "az $AZ_VER" ;;
+esac
+
 for ext in containerapp communication; do
   if az extension add --name "$ext" --only-show-errors >/dev/null 2>&1; then
     ok "az extension: $ext"
@@ -61,16 +80,18 @@ for ext in containerapp communication; do
   fi
 done
 
-# ---- 4. 终端自动激活 venv ---------------------------------------------------
-# 学员按文档敲 `source .venv/bin/activate` 仍然有效（重复激活无副作用），
-# 这里只是省掉「忘了激活导致 ModuleNotFoundError」这个课上高频问题。
-step "配置终端自动激活虚拟环境"
-ACTIVATE="source $CODE_DIR/.venv/bin/activate"
-MARKER="# workshop: auto-activate code/.venv"
-if ! grep -qF "$MARKER" "$HOME/.bashrc" 2>/dev/null; then
-  printf '\n%s\n%s\n' "$MARKER" "$ACTIVATE" >> "$HOME/.bashrc"
+# feature 的 installBicep 在网络不稳时会静默失败，这里补一次。
+# Lab 05 / 05-1 都要用 az deployment 跑 .bicep 模板。
+# 注意不能只看 az bicep install 的退出码：它可能返回 0 却装下一个跑不起来的
+# 二进制（在 arm64 上就会 rosetta error）。装完必须再验一次。
+if ! az bicep version >/dev/null 2>&1; then
+  az bicep install --only-show-errors >/dev/null 2>&1 || true
 fi
-ok "新开的终端会自动进入 code/.venv"
+if az bicep version >/dev/null 2>&1; then
+  ok "bicep $(az bicep version 2>/dev/null | head -1 | tr -d '\n')"
+else
+  warn "bicep 不可用 —— 只影响 Lab 05，课上可手动 az bicep install"
+fi
 
 echo
 echo "${D}onCreate 完成。${N}"

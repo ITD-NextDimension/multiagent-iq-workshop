@@ -77,8 +77,9 @@ For the implementation-level README, see [code/README.md](code/README.md).
 
 ## Set Up Your Environment
 
-Pick one of two routes. Both produce the same toolchain: Python 3.12, the 64 pinned
-packages, Azure CLI, `kubectl`, and the VS Code extensions.
+Pick one of two routes. Both install from the same requirements files and the same
+pinned Python 3.12, plus Azure CLI, `kubectl`, and the VS Code extensions - so every
+command in the labs is identical either way.
 
 ### Route A - GitHub Codespaces (recommended)
 
@@ -94,6 +95,10 @@ opens without waiting for an install.
 You need a GitHub account and GitHub Copilot with Agent mode available. When Lab 03
 asks for Azure OpenAI credentials, run `bash .devcontainer/set-key.sh` and paste the
 values your instructor hands out.
+
+**Step-by-step walkthrough: [Running the workshop in Codespaces](docs/codespaces.md)** -
+covers every step from creating the codespace to post-class cleanup, with the
+expected output at each checkpoint. (Written in Chinese for the class.)
 
 The same `.devcontainer/` also works locally in VS Code with the Dev Containers
 extension if you have Docker Desktop.

@@ -72,8 +72,8 @@ Lab 目录：
 
 ## 环境准备：两条路线选一条
 
-两条路线装出来的东西完全一样：Python 3.12、64 个钉死版本的包、Azure CLI、`kubectl`
-和 VS Code 扩展。
+两条路线用的是同一份依赖清单、同一个 Python 3.12，都带 Azure CLI、`kubectl`
+和 VS Code 扩展 —— 讲义里的命令一个字都不用改。
 
 ### 路线 A · GitHub Codespaces（推荐）
 
@@ -87,6 +87,9 @@ Lab 目录：
 需要准备：一个 GitHub 账号，以及可用 Agent 模式的 GitHub Copilot。
 Lab 03 开始需要 Azure OpenAI 凭证时，运行 `bash .devcontainer/set-key.sh`，
 把讲师发的值粘进去。
+
+**完整的分步操作见[用 Codespaces 跑完这门课 · 学员操作手册](docs/codespaces.md)** ——
+从创建 Codespace 一直写到课后清理，包含每一步的期望输出。
 
 同一份 `.devcontainer/` 也可以在本地用：装了 Docker Desktop 后，
 用 VS Code 的 Dev Containers 扩展打开即可。

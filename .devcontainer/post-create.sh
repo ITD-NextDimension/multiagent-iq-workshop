@@ -35,6 +35,23 @@ if [[ ! -f "$CODE_DIR/agents/.env" ]]; then
   chmod 600 "$CODE_DIR/agents/.env"
 fi
 
+# ---- 终端自动激活 venv -------------------------------------------------------
+# 放在 postCreate 而不是 onCreate：预构建快照是否包含 $HOME 没有明确保证，
+# 而这只是两行追加，每次创建都跑一遍的成本可以忽略，换来的是确定性。
+# 学员按文档敲 `source .venv/bin/activate` 仍然有效（重复激活无副作用）。
+#
+# 两个细节都不能省：
+#   * [ -f ] 守卫 —— venv 万一没建起来，不能让每个新终端都先吐一行
+#     "No such file or directory" 才让学员打字。
+#   * 路径加引号 —— 本地路线下工作区目录名可能含空格。
+MARKER="# workshop: auto-activate code/.venv"
+if ! grep -qF "$MARKER" "$HOME/.bashrc" 2>/dev/null; then
+  {
+    printf '\n%s\n' "$MARKER"
+    printf '[ -f "%s/.venv/bin/activate" ] && . "%s/.venv/bin/activate"\n' "$CODE_DIR" "$CODE_DIR"
+  } >> "$HOME/.bashrc"
+fi
+
 # ---- 欢迎信息 ---------------------------------------------------------------
 cat <<BANNER
 
