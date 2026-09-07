@@ -1,0 +1,77 @@
+// =============================================================================
+// 企业 AI 化转型 Lab · AI Company —— 统一开发环境
+//
+// 这一份配置同时服务三种跑法，学员选哪种都得到完全一样的环境：
+//   1. GitHub Codespaces（推荐）—— 浏览器点一下，什么都不用装
+//   2. 本地 VS Code + Dev Containers 扩展 —— 需要 Docker Desktop
+//   3. devcontainer CLI
+//
+// 不需要 Docker-in-Docker：Lab 05 的镜像由 ACR Tasks 在云端构建
+// （code/cloud/docker/*.Dockerfile 走 az acr build），容器内不需要 Docker。
+// =============================================================================
+{
+  "name": "AI Company Workshop · Python 3.12",
+
+  // 锁 3.12：README.md、.github/copilot-instructions.md 和课前检查脚本都写明
+  // 3.13 未经验证（agent-framework 与 pydantic-monty 的组合没在 3.13 上测过）。
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+
+  "features": {
+    // Lab 03 的 az login、Lab 05/05-1 的部署都要用。
+    // installBicep：预装 bicep，避免课上第一次 az deployment 时现下载。
+    "ghcr.io/devcontainers/features/azure-cli:1": {
+      "version": "latest",
+      "installBicep": true
+    },
+    // Lab 05（完整路线）要用 kubectl；helm 和 minikube 这门课用不到。
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "latest",
+      "helm": "none",
+      "minikube": "none"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      // 前三个与 scripts/pre-request-check/ 里安装的扩展保持一致。
+      // Copilot Agent 模式是 Lab 02-04 的主要工具。
+      "extensions": [
+        "github.copilot",
+        "github.copilot-chat",
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ],
+      "settings": {
+        // 必须指向 code/.venv —— .vscode/mcp.json 里写死了这个路径。
+        "python.defaultInterpreterPath": "${containerWorkspaceFolder}/code/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "files.eol": "\n",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  // Lab 04 的 uvicorn。本课本地只用这一个端口。
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "Lab 04 · Web 应用",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // 2 核足够：无 GPU、无数据库、无前端构建。
+  // 3 小时 x 2 核 = 6 core-hours，个人免费额度 120 core-hours/月。
+  "hostRequirements": {
+    "cpus": 2
+  },
+
+  // onCreate 与 postCreate 的分工很关键，不要对调：
+  //   onCreate   —— Codespaces 预构建(prebuild)会执行它并把结果打进镜像。
+  //                 装 64 个包这种重活放这里，学员开 Codespace 时已经装好了。
+  //   postCreate —— 每次创建 Codespace 都会跑，只做每人各自的轻量初始化。
+  "onCreateCommand": "bash .devcontainer/on-create.sh",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "remoteUser": "vscode"
+}

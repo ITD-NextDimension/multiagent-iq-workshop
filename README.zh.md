@@ -5,7 +5,7 @@
 这个 Workshop 围绕一家企业的 **AI 化转型**展开。企业的项目、财务账户、预算和任务数据分散在不同系统中，员工和管理者缺少一个可信、统一的业务洞察入口。团队将构建 **AI Company**：一个了解企业情况的 Copilot 解决方案。它通过本体连接业务数据，通过 MCP 暴露受治理的知识能力，使用 Microsoft Agent Framework 多智能体完成查询与分析，并通过云端聊天界面提供答案、图表和邮件分享。
 
 > **要讲这门课？** 从 [INSTRUCTOR.md](INSTRUCTOR.md) 开始 —— 从 T-7 天到课后清理的完整操作顺序。
-> **是来上课的学员？** 看 [课前环境清单](scripts/pre-request-check/00-学员环境清单.md)。
+> **是来上课的学员？** 先选一条环境准备路线：[环境准备](#环境准备两条路线选一条)。
 
 ## 你将构建什么
 
@@ -69,6 +69,33 @@ Lab 目录：
 | [labs/en](labs/en) | English workshop labs。 |
 
 实现层说明见 [code/README.zh.md](code/README.zh.md)。
+
+## 环境准备：两条路线选一条
+
+两条路线装出来的东西完全一样：Python 3.12、64 个钉死版本的包、Azure CLI、`kubectl`
+和 VS Code 扩展。
+
+### 路线 A · GitHub Codespaces（推荐）
+
+本地什么都不用装。在本仓库点 **Code → Codespaces → Create codespace on main**。
+依赖已经打进预构建镜像，进去就能用，不用等安装。
+
+> 请**直接在本仓库创建 Codespace，不要先 fork**。预构建是跟着仓库走的，fork 出来的
+> 仓库不继承，在 fork 上开 Codespace 会把 64 个包重装一遍。想保留自己的改动，
+> 课后再 fork 或下载即可。
+
+需要准备：一个 GitHub 账号，以及可用 Agent 模式的 GitHub Copilot。
+Lab 03 开始需要 Azure OpenAI 凭证时，运行 `bash .devcontainer/set-key.sh`，
+把讲师发的值粘进去。
+
+同一份 `.devcontainer/` 也可以在本地用：装了 Docker Desktop 后，
+用 VS Code 的 Dev Containers 扩展打开即可。
+
+### 路线 B · 本地安装
+
+按下面的[先决条件](#先决条件)和[本地设置](#本地设置)操作。也可以直接跑
+[课前环境清单](scripts/pre-request-check/00-学员环境清单.md)里的脚本，
+它会在 macOS、Linux/WSL 或 Windows 上把这些装好并逐项校验。
 
 ## 先决条件
 

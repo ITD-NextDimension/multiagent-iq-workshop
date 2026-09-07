@@ -5,7 +5,23 @@
 
 ## 30 秒决策
 
-先定一件事，它决定你课前要做多少准备：
+先定两件事，它们决定你课前要做多少准备。
+
+### 决策一：学员的环境走哪条路线
+
+| | **Codespaces** | **本地安装** |
+|---|---|---|
+| 学员装什么 | 什么都不装，浏览器就行 | Python / VS Code / az / kubectl |
+| 你课前要做 | 开预构建（见 T-7） | 打离线包（见 T-3） |
+| 学员前提 | GitHub 账号 + 能开 `*.app.github.dev` | 自己能装软件的电脑 |
+| 场地网络差 | ❌ 直接不能用 | ✅ 离线包可用 |
+| 适合 | 网络可靠、学员电脑五花八门 | 网络不确定、或学员在内网 |
+
+> **两条路线的环境完全一致**（同一份 `.devcontainer/`），讲义命令一个字不用改。
+> 建议：**主推 Codespaces，同时把离线包备在 U 盘里**。当天 Codespaces 打不开就切，
+> 切换成本只是学员多花时间装，讲义不用改。
+
+### 决策二：Lab 05 走哪个版本
 
 | | **Lab 05 完整版** | **Lab 05-1 资源受限版** |
 |---|---|---|
@@ -21,14 +37,40 @@
 
 ---
 
-## T-7 天 · 确认三件只有你能推动的事
+## T-7 天 · 确认四件只有你能推动的事
 
-1. **GitHub Copilot 的组织策略**。Lab 02–04 全程依赖 Agent 模式。
-   企业组织默认可能是关闭的，**开通要走审批，当天绝对来不及**。
-   让学员提前一天自测：Copilot Chat 里能否切到 Agent 模式。
-2. **Azure 订阅与配额**。走完整版的话，每人一套 AKS 会撞配额；
+1. **GitHub Copilot 能不能用 Agent 模式**。Lab 02–04 全程依赖它。分两种情况：
+
+   - **学员用企业组织账号**：组织策略默认可能关闭 Agent 模式，
+     **开通要走审批，当天绝对来不及**。让学员提前一天自测。
+   - **学员用个人账号**：Agent 模式**包含在 Copilot Free 里**（官方 plans 页面明确列出），
+     不需要付费订阅。但有个新变量 ——
+
+   > ⚠️ **Copilot 已于 2026-06-01 转为按量计费（AI Credits），而 Copilot Free 的额度
+   > 官方没有公布。** Agent 模式每轮要调用多次模型，很吃额度。
+   > 「Free 能用 Agent 模式」和「Free 够撑完 Lab 02–04」是两回事，
+   > 而官方没给任何数字可以据此规划。
+   >
+   > **课前务必用一个真实的免费账号，把 Lab 02–04 完整跑一遍**，
+   > 看额度会不会中途耗尽。耗尽了要么让学员升级 Copilot Pro，
+   > 要么当场切 Claude Code / Cursor（MCP 协议一样，只是注册文件不同）。
+   > 这是目前**唯一没有官方文档可依据**的风险点。
+
+2. **走 Codespaces 的话，开预构建**。仓库 Settings → Codespaces → Prebuilds，
+   给 `main` 分支建一个配置。没有预构建，每个学员开 Codespace 都要现装 64 个包。
+
+   - 学员应当**直接在你的仓库上创建 Codespace，不要先 fork** ——
+     预构建跟着仓库走，fork 不继承。这一条官方文档没有明说，
+     **课前自己用另一个账号实测一次**：机型选择界面上应该能看到 `⚡ Prebuild ready`。
+   - 预构建镜像占用的是**你账号的** Codespaces 存储额度（个人免费账号 15 GB-月）。
+   - 学员侧算 core-hours：3 小时 × 2 核 = 6 core-hours，个人免费额度 120 core-hours/月。
+   - 学员没有写权限，所以**仓库级 Codespaces secret 不会注入给他们**
+     （官方文档明确说明）。Azure 凭证只能课上发，学员跑 `.devcontainer/set-key.sh` 填。
+
+3. **Azure 订阅与配额**。走完整版的话，每人一套 AKS 会撞配额；
    不确定就直接走 Lab 05-1。
-3. **网络**。场地网络慢或有代理时，走离线包路线（见 T-3）。
+4. **网络**。场地网络慢或有代理时，走离线包路线（见 T-3）。
+   走 Codespaces 的话，确认场地网络能打开 `*.app.github.dev`。
 
 ---
 
@@ -144,7 +186,10 @@ python test_workflow.py | tail -1          # Lab 03 → All offline tests passed
 
 | 现象 | 真实原因 | 处理 |
 |---|---|---|
-| Copilot 切不到 Agent 模式 | 组织策略关闭 | **现场解决不了**，走 Claude Code / Cursor 备选 |
+| Copilot 切不到 Agent 模式 | 组织策略关闭（个人账号不受此限） | **现场解决不了**，走 Claude Code / Cursor 备选 |
+| Copilot 用着用着不响应了 | 个人免费账号 AI Credits 耗尽 | 升级 Pro，或当场切 Claude Code / Cursor |
+| Codespace 起不来 / 打不开 | 网络到不了 `*.app.github.dev` | 切本地路线，发离线包（所以 U 盘要带） |
+| Codespace 开了很久还在装依赖 | 学员 fork 了再开，没吃到预构建 | 让他关掉，回到你的仓库直接开 |
 | `ModuleNotFoundError: mcp` | 新终端没激活虚拟环境 | `source .venv/bin/activate` |
 | 一堆 `IncompleteFieldDefinitionWarning` | **正常现象**，不是报错 | 提前说，否则一半人举手 |
 | `import mcp` 在 `code/` 下拿到本地目录 | `code/mcp/` 遮蔽了同名包 | 用脚本路径 `python mcp/server.py`，别 `cd` 进去 import |
@@ -185,6 +230,7 @@ scripts/publish-workshop.sh <git-url>
 |---|---|
 | 让学员准备环境 | [00-学员环境清单.md](scripts/pre-request-check/00-学员环境清单.md) |
 | 打离线包 | [scripts/bundle/README.md](scripts/bundle/README.md) |
+| 改 Codespaces / 容器环境 | [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json) |
 | 讲 Lab 01 | [docs/walkthrough/lab-01.md](docs/walkthrough/lab-01.md) |
 | 部署 Lab 05-1 | [docs/deployment.md](docs/deployment.md) |
 | 理解代码架构 | [code/README.zh.md](code/README.zh.md) |

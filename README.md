@@ -10,7 +10,7 @@ knowledge with MCP, analyzes it with Microsoft Agent Framework agents, and deliv
 charts, and email sharing through a cloud-hosted chat experience.
 
 > **要讲这门课？** 从 [INSTRUCTOR.md](INSTRUCTOR.md) 开始 —— 从 T-7 天到课后清理的完整操作顺序。
-> **是来上课的学员？** 看 [课前环境清单](scripts/pre-request-check/00-学员环境清单.md)。
+> **是来上课的学员？** 先选一条环境准备路线：[Set Up Your Environment](#set-up-your-environment)。
 
 ## What You Will Build
 
@@ -74,6 +74,35 @@ Lab indexes:
 | [labs/cn](labs/cn) | Chinese workshop labs. |
 
 For the implementation-level README, see [code/README.md](code/README.md).
+
+## Set Up Your Environment
+
+Pick one of two routes. Both produce the same toolchain: Python 3.12, the 64 pinned
+packages, Azure CLI, `kubectl`, and the VS Code extensions.
+
+### Route A - GitHub Codespaces (recommended)
+
+Nothing to install locally. On this repository, click **Code -> Codespaces -> Create
+codespace on main**. Dependencies are baked into a prebuilt image, so the environment
+opens without waiting for an install.
+
+> Create the codespace **on this repository directly - do not fork first.** Prebuilds
+> belong to a repository and a fork does not inherit them, so a codespace on your fork
+> reinstalls all 64 packages from scratch. Fork or download afterwards if you want to
+> keep your work.
+
+You need a GitHub account and GitHub Copilot with Agent mode available. When Lab 03
+asks for Azure OpenAI credentials, run `bash .devcontainer/set-key.sh` and paste the
+values your instructor hands out.
+
+The same `.devcontainer/` also works locally in VS Code with the Dev Containers
+extension if you have Docker Desktop.
+
+### Route B - Local install
+
+Follow [Prerequisites](#prerequisites) and [Local Setup](#local-setup) below. The
+[pre-class environment checklist](scripts/pre-request-check/00-学员环境清单.md) can
+install and verify all of it for you on macOS, Linux/WSL, or Windows.
 
 ## Prerequisites
 
