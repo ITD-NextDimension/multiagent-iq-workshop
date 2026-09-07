@@ -250,8 +250,7 @@ for pair in "github.com|https://github.com" \
             "Azure 管理面|https://management.azure.com/" \
             "Entra 登录|https://login.microsoftonline.com/" \
             "VS Code 扩展市场|https://marketplace.visualstudio.com/" \
-            "GitHub Copilot|https://api.githubcopilot.com/" \
-            "微软容器仓库|https://mcr.microsoft.com/v2/"; do
+            "GitHub Copilot|https://api.githubcopilot.com/"; do
   nm="${pair%%|*}"; url="${pair##*|}"
   code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "$url" 2>/dev/null || echo 000)"
   if [ "$code" = "000" ]; then

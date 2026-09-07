@@ -9,6 +9,9 @@ enterprise insight Copilot that connects business data through an ontology, expo
 knowledge with MCP, analyzes it with Microsoft Agent Framework agents, and delivers answers,
 charts, and email sharing through a cloud-hosted chat experience.
 
+> **要讲这门课？** 从 [INSTRUCTOR.md](INSTRUCTOR.md) 开始 —— 从 T-7 天到课后清理的完整操作顺序。
+> **是来上课的学员？** 看 [课前环境清单](scripts/pre-request-check/00-学员环境清单.md)。
+
 ## What You Will Build
 
 By the end of the workshop, you will have an end-to-end enterprise insight Copilot:
