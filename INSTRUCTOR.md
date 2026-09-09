@@ -193,11 +193,12 @@ python test_workflow.py | tail -1          # Lab 03 → All offline tests passed
 | Copilot 用着用着不响应了 | 个人免费账号 AI Credits 耗尽 | 升级 Pro，或当场切 Claude Code / Cursor |
 | Codespace 起不来 / 打不开 | 网络到不了 `*.app.github.dev` | 切本地路线，发离线包（所以 U 盘要带） |
 | Codespace 开了很久还在装依赖 | 学员 fork 了再开，没吃到预构建 | 让他关掉，回到你的仓库直接开 |
-| `ModuleNotFoundError: mcp` | 新终端没激活虚拟环境 | `source .venv/bin/activate` |
+| `ModuleNotFoundError: mcp` | 新终端没激活虚拟环境 | `source /workspaces/*/code/.venv/bin/activate` |
 | 一堆 `IncompleteFieldDefinitionWarning` | **正常现象**，不是报错 | 提前说，否则一半人举手 |
 | `import mcp` 在 `code/` 下拿到本地目录 | `code/mcp/` 遮蔽了同名包 | 用脚本路径 `python mcp/server.py`，别 `cd` 进去 import |
 | WSL 里依赖装不上 | Ubuntu 22.04 自带 3.10，离线包是 cp312 | 装 Ubuntu 24.04，或 deadsnakes 装 3.12 |
 | Lab 05 在第 4 步失败 | 缺 `az` 的 `communication` 扩展 | `az extension add -n communication`（预检已会装） |
+| `az containerapp ...` 报 `Pip failed with status code 1` | 容器里的 az 退回了发行版版本，跑在系统 python 上，而那个 python 没有 pip，装不了扩展 | 实验命令已改成不依赖扩展（`az resource show --resource-type Microsoft.App/containerApps`）。要修环境就重跑 `bash /workspaces/*/.devcontainer/on-create.sh`，它会先补 pip 再装扩展 |
 | 部署很快就 403 | 服务主体授权没做完 | 联系你自己，别让学员改 RBAC |
 | 页面第一次打开很慢 | `minReplicas=0` 冷启动 | 等几十秒刷新，不是故障 |
 

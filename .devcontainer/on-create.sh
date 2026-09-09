@@ -57,14 +57,17 @@ else
   warn "装出来是 $COUNT 个包，预期 64 个 —— 依赖可能有漂移，课前请复核"
 fi
 
-# ---- 3. Azure CLI 扩展 ------------------------------------------------------
+# ---- 3. Azure CLI -----------------------------------------------------------
 # 只有 Lab 05 / 05-1 用得到。装不上不该让整个环境构建失败，
 # Lab 01-04 完全不受影响。
 step "准备 Azure CLI（Lab 05 用）"
 
-# az 的版本值得报一下。devcontainer feature 正常会从微软的 apt 源装最新版；
-# 构建时网络不稳会让它退回 Debian 自带的老版本（bookworm 是 2.45.0），
-# 那个版本对 containerapp 扩展和新版 Bicep 都可能不够用。
+# onCreate 以 vscode 身份运行，装系统包要 sudo；某些本地跑法直接就是 root。
+as_root() { if [[ "$(id -u)" -eq 0 ]]; then "$@"; else sudo "$@"; fi; }
+
+# az 的版本值得报一下。devcontainer 的 azure-cli feature 正常会从微软的 apt 源
+# 装最新版，但它的逻辑是「apt-get update 失败就删掉微软源接着装」——
+# 构建时网络一抖，就会静默退回 Debian 自带的 azure-cli（bookworm 是 2.45.0）。
 AZ_VER="$(az version --query '"azure-cli"' -o tsv 2>/dev/null || echo unknown)"
 case "$AZ_VER" in
   unknown) warn "az 没装上 —— Lab 05 会用不了" ;;
@@ -72,11 +75,40 @@ case "$AZ_VER" in
   *) ok "az $AZ_VER" ;;
 esac
 
+# 装扩展时 az 会 fork 一个 `pip install --target ...`，用的是 **az 自己的**
+# 解释器，跟 code/.venv 没有关系。发行版那个 azure-cli 跑在系统 python3.11 上，
+# 而这个镜像的系统 python 恰恰没有 pip，于是课上那句
+#     az containerapp show ...
+# 会触发扩展自动安装，然后以 "Pip failed with status code 1" 收场。
+# 学员当场补不了：Codespaces 里 apt / pip 都可能被网络策略拦住。
+# 所以 pip 必须在构建阶段补齐，而且要补到 az 真正使用的那个解释器上。
+AZ_PY=""
+for cand in /opt/az/bin/python3 /usr/local/pipx/venvs/azure-cli/bin/python /usr/bin/python3; do
+  if [[ -x "$cand" ]] && "$cand" -c "import azure.cli" >/dev/null 2>&1; then AZ_PY="$cand"; break; fi
+done
+
+if [[ -n "$AZ_PY" ]] && ! "$AZ_PY" -m pip --version >/dev/null 2>&1; then
+  warn "az 用的解释器（$AZ_PY）没有 pip —— 扩展装不上，现在补"
+  as_root apt-get update -qq >/dev/null 2>&1 || true
+  as_root apt-get install -y -qq python3-pip >/dev/null 2>&1 || true
+  "$AZ_PY" -m pip --version >/dev/null 2>&1 || "$AZ_PY" -m ensurepip --upgrade >/dev/null 2>&1 || true
+  if "$AZ_PY" -m pip --version >/dev/null 2>&1; then
+    ok "已补上 pip"
+  else
+    warn "pip 还是缺 —— az 扩展装不了，但 Lab 05-1 的脚本不依赖扩展，仍能跑"
+  fi
+fi
+
+# 扩展在这里装好，学员课上就不需要装任何东西。
+# 装不上也不致命：Lab 05-1 的脚本和文档走的是 az resource show（核心命令，
+# 不需要扩展），这里装上只是让 az containerapp 这类顺手命令也能用。
 for ext in containerapp communication; do
-  if az extension add --name "$ext" --only-show-errors >/dev/null 2>&1; then
+  az extension show --name "$ext" >/dev/null 2>&1 \
+    || az extension add --name "$ext" --only-show-errors >/dev/null 2>&1 || true
+  if az extension show --name "$ext" >/dev/null 2>&1; then
     ok "az extension: $ext"
   else
-    warn "az extension $ext 没装上 —— 只影响 Lab 05，需要时可手动重装"
+    warn "az extension $ext 没装上 —— Lab 05-1 不受影响，Lab 05 完整版需要时再手动装"
   fi
 done
 

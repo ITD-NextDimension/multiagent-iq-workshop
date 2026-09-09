@@ -25,10 +25,12 @@
 所有 Web-only 部署命令都从脚本目录运行：
 
 ```bash
-cd /Users/<your-user>/.../IQs/code/cloud/scripts
+cd /workspaces/*/code/cloud/scripts
 ```
 
-不要在 `code/` 目录下继续执行 `cd code/cloud/scripts`。这会尝试进入不存在的 `code/code/cloud/scripts`。
+这是 Codespaces / Dev Container 里的绝对路径，`/workspaces/*/` 会自动匹配到仓库目录，在任何位置粘贴都成立。
+
+不要用相对写法 `cd code/cloud/scripts`：它只在仓库根目录下成立，人已经在 `code/` 里再敲一次就会去找不存在的 `code/code/cloud/scripts`。
 
 ### 2. 获取讲师配置
 
@@ -152,14 +154,17 @@ bash deploy-web-only.sh <your-app-name>
 ### 1. 查询应用状态和域名
 
 ```bash
-az containerapp show \
+az resource show \
   -g <resource-group> \
   -n <your-app-name> \
+  --resource-type Microsoft.App/containerApps \
   --query "{name:name,state:properties.provisioningState,fqdn:properties.configuration.ingress.fqdn,scale:properties.template.scale,image:properties.template.containers[0].image}" \
   -o json
 ```
 
-预期关键字段：
+这里刻意用核心命令 `az resource show`，而不是 `az containerapp show`。后者由 `containerapp` 扩展提供，而 az 装扩展要调用它自己解释器里的 pip；Codespaces 容器里那个 pip 不一定存在，命令会以 `An error occurred. Pip failed with status code 1` 失败。两条命令读的是同一个 ARM 资源，字段完全一致。
+
+预期关键字段（`scale` 里还会带 `cooldownPeriod`、`pollingInterval`、`rules`，属于 ARM 补全的默认值，不用管）：
 
 ```json
 {
@@ -205,14 +210,14 @@ ACC-001 这个账户在给哪些项目付钱？
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
-| `cd: no such file or directory: code/...` | 已经位于 `code/` 或子目录，却再次写了 `cd code/...` | 先用 `pwd` 确认当前位置，再使用相对路径或本文给出的完整路径。 |
+| `cd: no such file or directory: code/...` | 用了相对路径 `cd code/...`，但人已经在 `code/` 或它的子目录里 | 一律用绝对路径 `cd /workspaces/*/code/...`，它在任何位置都成立。 |
 | `azd auth login` 成功但脚本仍要求登录 | 脚本使用 `az`，而不是 `azd` | 让脚本使用讲师服务主体登录，或用 `az account show` 确认当前 Azure CLI 上下文。 |
 | `无法切换到订阅 ...` | `AZURE_SUBSCRIPTION_ID` 可能配置错误，或服务主体没有目标订阅访问权 | 对比 `az account list --all` 与配置文件。若目标订阅不可见，请讲师检查服务主体的资源组级 `Contributor` 授权。 |
 | `看不到资源组` 或 HTTP 403 | 服务主体未被授权访问共享资源组，或订阅选错 | 不要切换到个人账号或自行修改 RBAC，联系讲师修复共享服务主体权限。 |
 | 缺少 `ACA_ENV_NAME`、`ACR_LOGIN_SERVER` 等 | 使用了模板文件，或正式配置未填写 | 向讲师索取完整的 `workshop-web.env`；不要从本地 `agents/.env` 拼凑。 |
 | 应用名不合规或名称已存在 | 名称格式不符合约束，或与其他学员重复 | 使用新的唯一小写名称，例如 `姓名缩写-web`。 |
 | 共享资源预检失败 | ACA 环境、托管身份或共享 API 出现问题 | 不要修改脚本或删除资源，联系讲师恢复共享资源。 |
-| `az containerapp` 提示安装扩展，但安装报 `No module named pip` | Azure CLI 使用的系统 Python 没有 `pip`，可选 `containerapp` 扩展无法安装 | 本脚本的 ACA 预检无需此扩展；管理员可执行 `sudo apt install -y python3-pip` 后运行 `az extension add --name containerapp --upgrade`。查询应用时可用 `az resource show --resource-type Microsoft.App/containerApps` 替代。 |
+| `az containerapp` 提示安装扩展，安装又报 `Pip failed with status code 1` / `No module named pip` | Azure CLI 用的系统 Python 没有 `pip`，可选的 `containerapp` 扩展装不上 | 预检和查地址都不需要这个扩展，改用 `az resource show --resource-type Microsoft.App/containerApps ...`（见上一节）。容器里的 pip 已由 `.devcontainer/on-create.sh` 在构建阶段补齐；旧环境可由管理员执行 `sudo apt install -y python3-pip`，再 `az extension add --name containerapp --upgrade`。 |
 | 首次打开页面很慢 | `minReplicas=0` 触发冷启动 | 等待几十秒，刷新同一 HTTPS 地址。 |
 
 ## 安全与清理

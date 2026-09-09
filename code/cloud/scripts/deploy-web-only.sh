@@ -114,6 +114,8 @@ check_shared() {  # $1=类型描述  $2=az 命令...
   fi
 }
 # 不依赖可选的 `containerapp` CLI 扩展；预检只需确认 ARM 资源可访问。
+# 课堂容器里那个扩展经常装不上：az 装扩展要用它自己解释器里的 pip，而容器里
+# 的系统 python 没有 pip，不该让一个预检把整个实验卡死。
 check_shared "Container Apps 环境 $ACA_ENV_NAME" \
   az resource show -g "$AZURE_RESOURCE_GROUP" \
     --resource-type Microsoft.App/managedEnvironments -n "$ACA_ENV_NAME"
@@ -155,12 +157,26 @@ if ! az deployment group create \
       "名称冲突就换一个应用名重跑；403/看不到资源就联系讲师。"
 fi
 
+# 取 URL。这里有个坑，踩过一次：ARM 会改写输出名的大小写 —— 模板里写的是
+# WEB_APP_URL，部署结果里回来的是 weB_APP_URL（首段大写只保留最后一个字母）。
+# 按字面 key 取必然取不到，所以统一转小写再匹配。
 URL="$(python3 -c "
-import json,sys
+import json
 d=json.load(open('/tmp/weblab.$$.json'))
-print(d.get('properties',{}).get('outputs',{}).get('WEB_APP_URL',{}).get('value',''))
+o=(d.get('properties') or {}).get('outputs') or {}
+by_lower={k.lower(): (v or {}).get('value','') for k, v in o.items()}
+print(by_lower.get('web_app_url',''))
 " 2>/dev/null)"
 rm -f /tmp/weblab.$$.json /tmp/weblab.$$.err
+
+# 万一模板输出还是拿不到（ARM 偶尔会把 outputs 整个省掉），直接问资源本身。
+# 仍然只用核心命令，不碰 containerapp 扩展。
+if [[ -z "$URL" ]]; then
+  FQDN="$(az resource show -g "$AZURE_RESOURCE_GROUP" -n "$APP_NAME" \
+            --resource-type Microsoft.App/containerApps \
+            --query properties.configuration.ingress.fqdn -o tsv --only-show-errors 2>/dev/null)"
+  [[ -n "$FQDN" ]] && URL="https://$FQDN"
+fi
 ok "部署完成"
 
 # ---- 回执 -------------------------------------------------------------------
@@ -170,7 +186,9 @@ if [[ -n "$URL" ]]; then
   echo "  ${G}${URL}${N}"
 else
   echo "  ${Y}没取到 URL，用这条命令查：${N}"
-  echo "  ${D}az containerapp show -g $AZURE_RESOURCE_GROUP -n $APP_NAME --query properties.configuration.ingress.fqdn -o tsv${N}"
+  echo "  ${D}az resource show -g $AZURE_RESOURCE_GROUP -n $APP_NAME \\${N}"
+  echo "  ${D}  --resource-type Microsoft.App/containerApps \\${N}"
+  echo "  ${D}  --query properties.configuration.ingress.fqdn -o tsv${N}"
 fi
 echo
 echo "  ${D}第一次打开会慢几十秒 —— minReplicas=0，正在冷启动，属于正常。${N}"

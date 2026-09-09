@@ -56,9 +56,14 @@ Codespaces 是 GitHub 提供的云端开发环境。你的代码、Python、VS C
 环境就绪 · Python 3.12.x · 64 个包
 
 先验证一下（不需要任何凭证）：
-  cd code && python mcp/server.py --selftest
-  cd code/agents && python test_workflow.py
+  cd /workspaces/*/code && python mcp/server.py --selftest
+  cd /workspaces/*/code/agents && python test_workflow.py
 ```
+
+> **本手册里的命令都写成绝对路径**（`/workspaces/*/` 会自动匹配到你的仓库目录）。
+> 这样每条命令都能独立复制执行，不用管你现在在哪个目录 ——
+> 相对路径的 `cd code` 只在仓库根目录下成立，连着粘两条就会报
+> `cd: no such file or directory`。
 
 **检查提示符最前面有没有 `(.venv)`。** 有就说明虚拟环境已自动激活，可以直接敲命令。
 
@@ -80,7 +85,7 @@ echo 'source /workspaces/*/code/.venv/bin/activate' >> ~/.bashrc
 如果连 `code/.venv` 都不存在，说明依赖没装成功，手动补一次（约 2–3 分钟）：
 
 ```bash
-bash .devcontainer/on-create.sh
+bash /workspaces/*/.devcontainer/on-create.sh
 ```
 </details>
 
@@ -99,7 +104,7 @@ pip list --format=freeze | wc -l
 这一步**不需要任何凭证**，纯本地验证。
 
 ```bash
-cd code
+cd /workspaces/*/code
 python mcp/server.py --selftest
 ```
 
@@ -115,7 +120,7 @@ python mcp/server.py --selftest
 接着验证智能体的离线能力：
 
 ```bash
-cd agents
+cd /workspaces/*/code/agents
 python test_workflow.py
 ```
 
@@ -169,7 +174,7 @@ cd /workspaces/*/code && python mcp/server.py --selftest
 在终端里跑：
 
 ```bash
-bash .devcontainer/set-key.sh
+bash /workspaces/*/.devcontainer/set-key.sh
 ```
 
 脚本会依次问你三样东西，照着讲师发的填：
@@ -273,20 +278,33 @@ Which projects does the business account fund?
 ### 7.3 先预览，再部署
 
 ```bash
-cd /workspaces/*/code/cloud/scripts
-bash deploy-web-only.sh <你的应用名> --preview
+cd /workspaces/*/code/cloud/scripts && bash deploy-web-only.sh <你的应用名> --preview
 ```
 
 确认没问题后正式部署（约 1–2 分钟）：
 
 ```bash
-bash deploy-web-only.sh <你的应用名>
+cd /workspaces/*/code/cloud/scripts && bash deploy-web-only.sh <你的应用名>
 ```
 
 > 脚本会用讲师发的**服务主体**自动登录，密码是运行时隐藏输入的。
 > **你不需要执行 `az login`。**
 
 部署完会输出一个地址，打开它，把第 6 步的问题再问一遍，确认云上版本也能答。
+
+#### 查自己应用的地址
+
+万一没看到地址（或者关掉终端后想再查一次），用这条命令：
+
+```bash
+az resource show -g <资源组> -n <你的应用名> \
+  --resource-type Microsoft.App/containerApps \
+  --query properties.configuration.ingress.fqdn -o tsv
+```
+
+> 网上更常见的写法是 `az containerapp show ...`，但它属于 `containerapp` **扩展**。
+> 容器里装扩展要用 az 自己解释器的 pip，那个 pip 不一定在，会报
+> `Pip failed with status code 1`。上面这条是 az 的**核心命令**，不需要任何扩展。
 
 > ### 走 Lab 05 完整版的同学看这里
 > 完整版需要你自己的 Azure 订阅，得先登录。**Codespaces 里没有浏览器可以跳转，
@@ -328,12 +346,13 @@ GitHub 会自动帮你 fork 一份到你自己名下，改动推到你的 fork �
 | 终端提示符没有 `(.venv)` | 虚拟环境没自动激活 | `source /workspaces/*/code/.venv/bin/activate` |
 | `ModuleNotFoundError: mcp` | 同上，环境没激活 | 同上 |
 | 满屏 `IncompleteFieldDefinitionWarning` | **正常现象**，不是报错 | 不用管，检查照样通过 |
-| `pip list \| wc -l` 不是 64 | 依赖没装全 | `bash .devcontainer/on-create.sh` 重装 |
+| `pip list \| wc -l` 不是 64 | 依赖没装全 | `bash /workspaces/*/.devcontainer/on-create.sh` 重装 |
 | 浏览器打不开 `127.0.0.1:8000` | Codespaces 服务在云端 | 用端口转发，见第 6.2 步 |
 | Copilot 切不到 Agent 模式 | 组织策略关闭 | 现场解决不了，改用 Claude Code / Cursor |
 | Copilot 用着用着不响应了 | 免费额度耗尽 | 升级 Copilot Pro，或改用 Claude Code / Cursor |
-| Lab 03 报缺少 Azure OpenAI 设置 | 凭证没填或填错 | 重跑 `bash .devcontainer/set-key.sh` |
+| Lab 03 报缺少 Azure OpenAI 设置 | 凭证没填或填错 | 重跑 `bash /workspaces/*/.devcontainer/set-key.sh` |
 | `deploy-web-only.sh` 说找不到配置 | `workshop-web.env` 没放对位置 | 必须在 `code/cloud/scripts/` 下 |
+| `az containerapp ...` 报 `Pip failed with status code 1` | 这条命令来自 `containerapp` 扩展，装扩展要用 az 自己的 pip，容器里可能没有 | 不用装扩展，改用核心命令查地址，见第 7.3 步「查自己应用的地址」 |
 | Codespace 整个打不开 | 网络到不了 `*.app.github.dev` | 找讲师要离线安装包，改走本地路线 |
 
 ---
@@ -341,12 +360,12 @@ GitHub 会自动帮你 fork 一份到你自己名下，改动推到你的 fork �
 ## 命令速查
 
 ```bash
-pip list --format=freeze | wc -l                       # → 64
-cd code && python mcp/server.py --selftest             # → {"active": 105000.0, ...}
-cd code/agents && python test_workflow.py              # → All offline tests passed
-bash .devcontainer/set-key.sh                          # 填 Azure OpenAI 凭证
-cd code/agents && python test_workflow.py --live "..." # 端到端调模型
-cd code/agents && uvicorn api:app --port 8000          # 起 Web 应用（用转发端口打开）
+pip list --format=freeze | wc -l                                   # → 64
+cd /workspaces/*/code && python mcp/server.py --selftest            # → {"active": 105000.0, ...}
+cd /workspaces/*/code/agents && python test_workflow.py             # → All offline tests passed
+bash /workspaces/*/.devcontainer/set-key.sh                         # 填 Azure OpenAI 凭证
+cd /workspaces/*/code/agents && python test_workflow.py --live "..." # 端到端调模型
+cd /workspaces/*/code/agents && uvicorn api:app --port 8000         # 起 Web 应用（用转发端口打开）
 ```
 
 ---

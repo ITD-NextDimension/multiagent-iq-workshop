@@ -58,11 +58,11 @@ cat <<BANNER
 ${G}环境就绪${N} ${D}· Python $("$CODE_DIR/.venv/bin/python" --version 2>&1 | cut -d' ' -f2) · $("$CODE_DIR/.venv/bin/python" -m pip list --format=freeze | wc -l | tr -d ' ') 个包${N}
 
 ${B}先验证一下（不需要任何凭证）：${N}
-  cd code && python mcp/server.py --selftest
-  cd code/agents && python test_workflow.py
+  cd /workspaces/*/code && python mcp/server.py --selftest
+  cd /workspaces/*/code/agents && python test_workflow.py
 
 ${B}Lab 03 开始需要 Azure OpenAI 凭证，讲师会在课上发：${N}
-  bash .devcontainer/set-key.sh
+  bash /workspaces/*/.devcontainer/set-key.sh
 
 ${D}实验手册：labs/cn/  ·  代码说明：code/README.zh.md${N}
 

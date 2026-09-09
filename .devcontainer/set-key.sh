@@ -138,5 +138,5 @@ fi
 
 echo
 echo "${B}验证：${N}"
-echo "  cd code/agents && python test_workflow.py --live \"What is the total budget by project status? Draw a bar chart.\""
+echo "  cd /workspaces/*/code/agents && python test_workflow.py --live \"What is the total budget by project status? Draw a bar chart.\""
 echo
